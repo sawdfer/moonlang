@@ -1,0 +1,28 @@
+{
+  "common": {
+    "appName": "Moonlang",
+    "signIn": "Entrar",
+    "signOut": "Sair",
+    "loading": "Carregando…",
+    "terms": "Termos e privacidade"
+  },
+  "home": {
+    "title": "Inglês com a Luana, do seu jeito 🌙",
+    "subtitle": "Aulas online em grupo ou individuais. Bora conversar?",
+    "whatsapp": "Chamar no WhatsApp"
+  },
+  "login": {
+    "title": "Welcome back! 👋",
+    "identifier": "E-mail ou celular",
+    "password": "Senha",
+    "submit": "Entrar",
+    "error": "Não deu certo. Confira seus dados e tente de novo."
+  },
+  "preferences": {
+    "language": "Idioma",
+    "theme": "Tema",
+    "themeSystem": "Automático",
+    "themeLight": "Claro",
+    "themeDark": "Modo noite"
+  }
+}

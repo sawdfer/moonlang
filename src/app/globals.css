@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+/* Dark mode follows the `.dark` class set by next-themes (F-010). */
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Moonlang design tokens (provisional, see docs/07-identidade-visual.md).
+ * Change colors here only; components use the semantic names below.
+ */
+:root {
+  --background: #f7f6fb;
+  --foreground: #14163a;
+  --card: #ffffff;
+  --card-foreground: #14163a;
+  --muted: #ecebf5;
+  --muted-foreground: #5b5d7a;
+  --primary: #6d5ce8;
+  --primary-foreground: #ffffff;
+  --accent: #f6d77a;
+  --accent-foreground: #14163a;
+  --destructive: #d64545;
+  --destructive-foreground: #ffffff;
+  --success: #2f9e6e;
+  --border: #dddbeb;
+  --input: #dddbeb;
+  --ring: #8b7cf6;
+  --radius: 0.875rem;
+}
+
+.dark {
+  --background: #0e1030;
+  --foreground: #eceaf8;
+  --card: #171a42;
+  --card-foreground: #eceaf8;
+  --muted: #1f2350;
+  --muted-foreground: #a9a8c9;
+  --primary: #8b7cf6;
+  --primary-foreground: #0e1030;
+  --accent: #f6d77a;
+  --accent-foreground: #14163a;
+  --destructive: #ef6b6b;
+  --destructive-foreground: #0e1030;
+  --success: #4cc495;
+  --border: #2b2f63;
+  --input: #2b2f63;
+  --ring: #a99cf8;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 6px);
+  --radius-md: calc(var(--radius) - 3px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 6px);
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-fredoka);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+}

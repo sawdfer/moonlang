@@ -1,0 +1,12 @@
+# Dependency install scripts are blocked by default (supply-chain safety).
+# These packages ship prebuilt binaries through optional dependencies,
+# so their scripts are not needed.
+allowBuilds:
+  sharp: false
+  unrs-resolver: false
+  "@parcel/watcher": false
+  "@swc/core": false
+  esbuild: false
+
+# Only install versions published at least 7 days ago (in minutes).
+minimumReleaseAge: 10080

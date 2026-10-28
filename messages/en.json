@@ -1,0 +1,28 @@
+{
+  "common": {
+    "appName": "Moonlang",
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "loading": "Loading…",
+    "terms": "Terms and privacy"
+  },
+  "home": {
+    "title": "English with Luana, your way 🌙",
+    "subtitle": "Online group or one-on-one lessons. Shall we talk?",
+    "whatsapp": "Message on WhatsApp"
+  },
+  "login": {
+    "title": "Welcome back! 👋",
+    "identifier": "E-mail or phone",
+    "password": "Password",
+    "submit": "Sign in",
+    "error": "That didn't work. Check your details and try again."
+  },
+  "preferences": {
+    "language": "Language",
+    "theme": "Theme",
+    "themeSystem": "Automatic",
+    "themeLight": "Light",
+    "themeDark": "Night mode"
+  }
+}
