@@ -59,8 +59,10 @@ Domains: `auth`, `people` (students, invites, consents), `classes` (class groups
 - **Money is integer cents.** Format with `formatBRL`.
 - **Time:** store `timestamptz` (UTC); compute and display in `America/Sao_Paulo`.
 - **Meeting links** are only rendered inside authenticated pages, never in e-mails, notifications or calendar feeds.
-- **Every UI string** goes in `messages/pt-BR.json` and `messages/en.json`, in a namespace per feature. Tone: friendly, "você", Portuguese with a bit of English.
-- **Sensitive actions** (manual adjustments, payments, role changes, deletions) write to `audit_log`.
+- **Every UI string** goes in `messages/pt-BR/<feature>.json` and `messages/en/<feature>.json` (one file per feature, registered in each `index.ts`). Tone: friendly, "você", Portuguese with a bit of English.
+- **Sensitive actions** (manual adjustments, payments, role changes, deletions) call `recordAudit()` from `@/server/audit`.
+- **Notifications:** other domains call `notify()` and `queueWhatsApp()` from `@/server/notifications`; they never write notification tables directly.
+- **Dates:** use `date-fns` with `@date-fns/tz` and the helpers in `@/lib/dates`.
 - **No secrets in code.** Use `.env.local` locally and Vercel environment variables in production.
 
 ## Database changes
