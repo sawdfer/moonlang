@@ -1,43 +1,74 @@
 import "server-only";
 import { db } from "@/db";
-import { notification, whatsappMessage } from "@/db/schema";
+import { env } from "@/env";
+import { createConsoleEmailSender, createResendEmailSender, type EmailSender } from "./email";
+import {
+  type AnnouncementAudience,
+  type NotificationDeps,
+  type NotifyInput,
+  notifyWith,
+  type QueueWhatsAppInput,
+  queueWhatsAppWith,
+  runReminders as runRemindersWith,
+  sendAnnouncement as sendAnnouncementWith,
+} from "./service";
 
 /**
  * Public API of the notifications domain (F-008). Other domains call these
  * functions instead of writing notification tables directly.
  *
- * Current version: stores in-app notifications and WhatsApp drafts.
- * TODO(F-008): e-mail delivery, preferences, templates per locale and CEFR level.
+ * - `notify()` stores the notification in the user's center and, with
+ *   `sendEmail: true`, e-mails it in the user's language (respecting the
+ *   "non-essential e-mails" preference). Pass `template` to get texts in the
+ *   recipient's language; plain `title`/`body` still work.
+ * - `queueWhatsApp()` adds a ready-made text to the teacher's WhatsApp queue
+ *   (sent manually via wa.me). Numbers that are not valid mobiles are skipped.
+ *
+ * Nothing here may contain a meeting link (RN-024): links are platform paths
+ * and texts with Google Meet or Zoom addresses are rejected.
  */
-export type NotifyInput = {
-  userId: string;
-  type: string;
-  title: string;
-  body: string;
-  /** Path inside the platform, e.g. "/student/lessons/123". Never a meeting URL (RN-024). */
-  link?: string;
-  sendEmail?: boolean;
-};
+export type { NotifyInput, QueueWhatsAppInput, AnnouncementAudience };
+export type { NotificationTemplate, TemplateKey } from "./templates";
+export { NOTIFICATION_TYPES } from "./types";
 
-export async function notify(input: NotifyInput): Promise<void> {
-  await db.insert(notification).values({
-    userId: input.userId,
-    type: input.type,
-    title: input.title,
-    body: input.body,
-    link: input.link,
-    emailStatus: input.sendEmail ? "pending" : "none",
-  });
+let emailSender: EmailSender | undefined;
+
+function getEmailSender(): EmailSender {
+  if (!emailSender) {
+    emailSender =
+      env.RESEND_API_KEY && env.EMAIL_FROM
+        ? createResendEmailSender({ apiKey: env.RESEND_API_KEY, from: env.EMAIL_FROM })
+        : createConsoleEmailSender();
+    if (emailSender.name === "console" && env.NODE_ENV === "production") {
+      console.warn("[notifications] RESEND_API_KEY/EMAIL_FROM not set: e-mails are only logged.");
+    }
+  }
+  return emailSender;
 }
 
-/** Adds a ready-made message to the teacher's WhatsApp queue (sent manually via wa.me). */
-export async function queueWhatsApp(input: {
-  recipientId?: string;
-  phoneNumber: string;
-  body: string;
-  sourceType: string;
-  sourceId?: string;
-  expiresAt?: Date;
-}): Promise<void> {
-  await db.insert(whatsappMessage).values(input);
+function deps(): NotificationDeps {
+  return {
+    db,
+    email: getEmailSender(),
+    appUrl: env.BETTER_AUTH_URL,
+    log: (message, error) => console.error(`[notifications] ${message}`, error),
+  };
+}
+
+/** Returns the notification id, or null when `dedupeKey` was already used. */
+export async function notify(input: NotifyInput): Promise<string | null> {
+  return notifyWith(deps(), input);
+}
+
+/** Returns the queued message id, or null when the phone number is not a valid mobile. */
+export async function queueWhatsApp(input: QueueWhatsAppInput): Promise<string | null> {
+  return queueWhatsAppWith(deps(), input);
+}
+
+export async function runReminders(now: Date = new Date()) {
+  return runRemindersWith(deps(), now);
+}
+
+export async function sendAnnouncement(input: Parameters<typeof sendAnnouncementWith>[1]) {
+  return sendAnnouncementWith(deps(), input);
 }

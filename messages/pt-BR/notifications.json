@@ -1,0 +1,125 @@
+{
+  "notifications": {
+    "center": {
+      "title": "Notificações",
+      "open": "Abrir notificações",
+      "unread": "{count, plural, one {# não lida} other {# não lidas}}",
+      "empty": "Tudo em dia por aqui. Even the moon takes a break 🌙",
+      "markAllRead": "Marcar todas como lidas",
+      "markRead": "Marcar como lida",
+      "openLink": "Abrir",
+      "error": "Não deu pra carregar agora. Tenta de novo?"
+    },
+    "whatsapp": {
+      "title": "Fila do WhatsApp",
+      "subtitle": "Mensagens prontas para você enviar do seu WhatsApp. Toque em \"Enviar\", confirme no WhatsApp e volte para marcar como feita.",
+      "empty": "Nenhuma mensagem na fila. Inbox zero, baby ✨",
+      "send": "Enviar",
+      "markSent": "Feito",
+      "discard": "Descartar",
+      "to": "Para",
+      "createdAt": "Criada em {date}",
+      "expiresAt": "Some da fila em {date}",
+      "source": {
+        "announcement": "Comunicado",
+        "lesson_tomorrow": "Lembrete de aula",
+        "other": "Aviso"
+      }
+    },
+    "announcements": {
+      "title": "Comunicados",
+      "subtitle": "Escreva uma vez e o recado chega na central, no e-mail e na sua fila do WhatsApp.",
+      "message": "Mensagem",
+      "messagePlaceholder": "Ex.: Não haverá aula no feriado de 15/11. Enjoy! 🎉",
+      "audience": "Para quem?",
+      "audienceAll": "Todos os alunos",
+      "audienceClassGroups": "Turmas",
+      "audienceStudents": "Alunos específicos",
+      "noClassGroups": "Nenhuma turma ativa ainda.",
+      "noStudents": "Nenhum aluno cadastrado ainda.",
+      "submit": "Enviar comunicado",
+      "sending": "Enviando…",
+      "sent": "Comunicado enviado para {count, plural, one {# aluno} other {# alunos}} ✨",
+      "whatsappQueued": "{count, plural, =0 {Nenhuma mensagem foi para a fila do WhatsApp.} one {# mensagem foi para a fila do WhatsApp.} other {# mensagens foram para a fila do WhatsApp.}}",
+      "openQueue": "Abrir fila do WhatsApp",
+      "recent": "Enviados recentemente",
+      "recentEmpty": "Nenhum comunicado enviado ainda.",
+      "recipients": "{count, plural, one {# destinatário} other {# destinatários}}",
+      "errors": {
+        "empty": "Escreva a mensagem antes de enviar.",
+        "tooLong": "A mensagem está muito longa (máximo de 2.000 caracteres).",
+        "noRecipients": "Escolha pelo menos um destinatário.",
+        "meetingLink": "Comunicados não podem ter link de reunião: ele fica só na página da aula 😉"
+      }
+    },
+    "templates": {
+      "lessonTomorrow": {
+        "title": "Amanhã tem aula! 🌙",
+        "body": "Sua aula é amanhã, {weekday}, às {time}. Don't forget, see you there 👋",
+        "whatsapp": "Oi, {name}! Passando pra lembrar: amanhã ({weekday}) tem aula às {time} 🌙 Tudo fica na página da aula, na plataforma: {url}"
+      },
+      "lessonInOneHour": {
+        "title": "Sua aula começa em 1h 🌙",
+        "body": "Hoje às {time}. Abra a aula na plataforma e toque em \"Entrar na aula\". Let's go!"
+      },
+      "announcement": {
+        "title": "Novo comunicado de {author} 📣",
+        "body": "{message}",
+        "whatsapp": "Oi, {name}! 📣 {message}"
+      },
+      "chargeDueSoon": {
+        "title": "Sua mensalidade vence em 3 dias 💸",
+        "body": "Valor: {amount}. Vencimento: {date}. Easy peasy!"
+      },
+      "chargeOverdue": {
+        "title": "Sua mensalidade está em atraso",
+        "body": "A cobrança de {amount}, com vencimento em {date}, ainda está em aberto. Bora regularizar?"
+      },
+      "blockWarning": {
+        "title": "Atenção: seu acesso pode ser bloqueado",
+        "body": "A cobrança de {amount} está em atraso. Se ela não for paga até {date}, o acesso às aulas fica bloqueado."
+      },
+      "priceChange": {
+        "title": "Reajuste de mensalidade",
+        "body": "A partir de {date}, sua mensalidade passa a ser {amount}."
+      },
+      "creditExpiring": {
+        "title": "Seu crédito de aula vence em 3 dias ⏳",
+        "body": "Créditos: {count}. Vencimento: {date}. Bora usar?"
+      },
+      "creditGranted": {
+        "title": "Você ganhou crédito de aula 🎁",
+        "body": "Créditos: {count}. Use até {date}."
+      },
+      "lessonRequestAccepted": {
+        "title": "Pedido de aula aceito ✅",
+        "body": "Sua aula de {weekday}, {date}, às {time} está confirmada."
+      },
+      "lessonRequestRejected": {
+        "title": "Pedido de aula recusado",
+        "body": "Não deu pra confirmar a aula de {date} às {time}. Bora tentar outro horário?"
+      },
+      "lessonCancelledByTeacher": {
+        "title": "Aula cancelada",
+        "body": "A aula de {weekday}, {date}, às {time} foi cancelada pela professora."
+      },
+      "lessonRequested": {
+        "title": "Novo pedido de aula",
+        "body": "{student} pediu uma aula para {date} às {time}."
+      },
+      "studentCancelled": {
+        "title": "{student} cancelou a aula",
+        "body": "Aula de {weekday}, {date}, às {time}."
+      },
+      "newStudent": {
+        "title": "Novo aluno! 🎉",
+        "body": "{student} aceitou o convite e entrou na plataforma."
+      }
+    },
+    "email": {
+      "greeting": "Oi, {name}!",
+      "cta": "Abrir na Moonlang",
+      "footer": "Moonlang 🌙 Aulas de inglês com a Luana"
+    }
+  }
+}

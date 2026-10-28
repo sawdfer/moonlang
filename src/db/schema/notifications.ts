@@ -1,5 +1,13 @@
 // In-app notifications, WhatsApp queue and announcements (F-008).
-import { jsonb, pgEnum, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import {
+  index,
+  jsonb,
+  pgEnum,
+  pgTable,
+  smallint,
+  text,
+  timestamp,
+} from "drizzle-orm/pg-core";
 import { createdAt, id } from "./_shared";
 import { user } from "./auth";
 
@@ -15,20 +23,27 @@ export const whatsappStatus = pgEnum("whatsapp_status", [
   "discarded",
 ]);
 
-export const notification = pgTable("notification", {
-  id: id(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-  type: text("type").notNull(),
-  title: text("title").notNull(),
-  body: text("body").notNull(),
-  /** Always a link inside the platform, never a meeting URL (RN-024). */
-  link: text("link"),
-  readAt: timestamp("read_at", { withTimezone: true }),
-  emailStatus: emailStatus("email_status").notNull().default("none"),
-  createdAt: createdAt(),
-});
+export const notification = pgTable(
+  "notification",
+  {
+    id: id(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    type: text("type").notNull(),
+    title: text("title").notNull(),
+    body: text("body").notNull(),
+    /** Always a link inside the platform, never a meeting URL (RN-024). */
+    link: text("link"),
+    readAt: timestamp("read_at", { withTimezone: true }),
+    emailStatus: emailStatus("email_status").notNull().default("none"),
+    emailAttempts: smallint("email_attempts").notNull().default(0),
+    /** Makes automatic notifications idempotent, e.g. one reminder per lesson and student. */
+    dedupeKey: text("dedupe_key").unique(),
+    createdAt: createdAt(),
+  },
+  (t) => [index("notification_user_created_idx").on(t.userId, t.createdAt)],
+);
 
 /** Ready-made messages the teacher sends from her own WhatsApp via wa.me links (P7). */
 export const whatsappMessage = pgTable("whatsapp_message", {
