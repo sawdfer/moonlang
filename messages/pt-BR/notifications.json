@@ -32,7 +32,7 @@
       "message": "Mensagem",
       "messagePlaceholder": "Ex.: Não haverá aula no feriado de 15/11. Enjoy! 🎉",
       "audience": "Para quem?",
-      "audienceAll": "Todos os alunos",
+      "audienceAll": "Todos os alunos ativos",
       "audienceClassGroups": "Turmas",
       "audienceStudents": "Alunos específicos",
       "noClassGroups": "Nenhuma turma ativa ainda.",
@@ -50,7 +50,9 @@
         "tooLong": "A mensagem está muito longa (máximo de 2.000 caracteres).",
         "noRecipients": "Escolha pelo menos um destinatário.",
         "meetingLink": "Comunicados não podem ter link de reunião: ele fica só na página da aula 😉"
-      }
+      },
+      "includeFormer": "Incluir ex-alunos",
+      "includeTrials": "Incluir alunos experimentais"
     },
     "templates": {
       "lessonTomorrow": {

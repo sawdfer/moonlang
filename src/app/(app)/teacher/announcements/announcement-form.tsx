@@ -86,6 +86,18 @@ export function AnnouncementForm({
           ))}
         </div>
 
+        {audience === "all" && (
+          <div className="flex flex-col gap-2 text-sm">
+            <label className="inline-flex items-center gap-2">
+              <input type="checkbox" name="includeFormer" className="accent-primary" />
+              {t("includeFormer")}
+            </label>
+            <label className="inline-flex items-center gap-2">
+              <input type="checkbox" name="includeTrials" className="accent-primary" />
+              {t("includeTrials")}
+            </label>
+          </div>
+        )}
         {audience === "classGroups" && (
           <OptionList name="classGroupIds" options={classGroups} empty={t("noClassGroups")} />
         )}

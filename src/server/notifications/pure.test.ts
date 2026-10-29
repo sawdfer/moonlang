@@ -165,8 +165,8 @@ describe("shouldSendEmail", () => {
     }
   });
 
-  it("respects the preference for non-essential e-mails", () => {
-    expect(shouldSendEmail({ type: "materials_available", nonEssentialEmails: false })).toBe(false);
+  it("V9: every e-mail type is essential, whatever the preference", () => {
+    expect(shouldSendEmail({ type: "materials_available", nonEssentialEmails: false })).toBe(true);
     expect(shouldSendEmail({ type: "materials_available", nonEssentialEmails: true })).toBe(true);
     expect(shouldSendEmail({ type: "something_else", essential: false, nonEssentialEmails: false })).toBe(false);
     expect(shouldSendEmail({ type: "announcement", nonEssentialEmails: false })).toBe(true);

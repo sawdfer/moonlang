@@ -34,7 +34,8 @@ export const auth = betterAuth({
     minPasswordLength: 12,
     maxPasswordLength: 128,
     revokeSessionsOnPasswordReset: true,
-    resetPasswordTokenExpiresIn: 60 * 60,
+    // Reset and welcome links last 24 hours (RN-020, V12).
+    resetPasswordTokenExpiresIn: 60 * 60 * 24,
     // Password recovery is by e-mail (F-001).
     sendResetPassword: async ({ user, url }) => {
       const t = mailTranslator(await localeOf(user.id));

@@ -32,7 +32,7 @@
       "message": "Message",
       "messagePlaceholder": "E.g. No lesson on the Nov 15 holiday. Enjoy! 🎉",
       "audience": "Who gets it?",
-      "audienceAll": "All students",
+      "audienceAll": "All active students",
       "audienceClassGroups": "Class groups",
       "audienceStudents": "Specific students",
       "noClassGroups": "No active class groups yet.",
@@ -50,7 +50,9 @@
         "tooLong": "The message is too long (2,000 characters max).",
         "noRecipients": "Pick at least one recipient.",
         "meetingLink": "Announcements can't include a meeting link: it only lives on the lesson page 😉"
-      }
+      },
+      "includeFormer": "Include former students",
+      "includeTrials": "Include trial students"
     },
     "templates": {
       "lessonTomorrow": {

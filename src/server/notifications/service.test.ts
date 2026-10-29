@@ -92,11 +92,11 @@ describe("notify", () => {
     expect(email.sent).toHaveLength(0);
   });
 
-  it("F-008: skips non-essential e-mails when the user turned them off", async () => {
+  it("V9: sends every e-mail even when the old preference is off", async () => {
     await addUser("ana", {}, { nonEssentialEmails: false });
     await notifyWith(deps, { userId: "ana", type: "materials_available", title: "Material novo", sendEmail: true });
     await notifyWith(deps, { userId: "ana", type: "charge_due_soon", title: "Mensalidade", sendEmail: true });
-    expect(email.sent.map((m) => m.subject)).toEqual(["Mensalidade"]);
+    expect(email.sent.map((m) => m.subject)).toEqual(["Material novo", "Mensalidade"]);
     expect((await listNotifications(db, "ana")).items).toHaveLength(2);
   });
 
@@ -268,6 +268,17 @@ describe("announcements", () => {
     expect(email.sent).toHaveLength(2);
     const [draft] = await listWhatsAppQueue(db, new Date());
     expect(draft?.body).toBe("Oi, Ana! 📣 Não haverá aula no feriado 🎉");
+  });
+
+  it("V10: 'all students' means active ones; former and trial students only on request", async () => {
+    await seedClassGroup();
+    await addUser("duda", { role: "trial" });
+    const send = (audience: Parameters<typeof sendAnnouncement>[1]["audience"]) =>
+      sendAnnouncement(deps, { authorId: "luana", authorName: "Luana", body: "Oi", audience });
+    // ana and bia are active; caio dropped out; duda is a trial user.
+    expect((await send({ all: true })).recipients).toBe(2);
+    expect((await send({ all: true, includeFormer: true })).recipients).toBe(3);
+    expect((await send({ all: true, includeFormer: true, includeTrials: true })).recipients).toBe(4);
   });
 
   it("only addresses students, never staff ids sent by the client", async () => {

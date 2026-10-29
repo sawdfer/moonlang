@@ -20,7 +20,11 @@ function readAudience(form: FormData): AnnouncementAudience {
     case "students":
       return { userIds: ids.parse(form.getAll("userIds")) };
     default:
-      return { all: true };
+      return {
+        all: true,
+        includeFormer: form.get("includeFormer") === "on",
+        includeTrials: form.get("includeTrials") === "on",
+      };
   }
 }
 

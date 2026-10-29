@@ -323,7 +323,8 @@ export async function runReminders(deps: NotificationDeps, now: Date): Promise<R
 }
 
 export type AnnouncementAudience =
-  | { all: true }
+  /** Active students by default; former students and trial users only when asked (V10). */
+  | { all: true; includeFormer?: boolean; includeTrials?: boolean }
   | { classGroupIds: string[] }
   | { userIds: string[] };
 
@@ -344,18 +345,28 @@ export function validateAnnouncementBody(body: string): string {
 }
 
 /**
- * Students an announcement reaches. "Everyone" means students with a current
- * enrollment (active or blocked), so former students are not contacted.
+ * Students an announcement reaches. "Everyone" means students with an active
+ * enrollment (V10); blocked and former students are left out unless
+ * `includeFormer` is set, and trial users unless `includeTrials` is set.
  * Specific ids are restricted to students and trial users.
  */
 export async function resolveAudience(db: Database, audience: AnnouncementAudience): Promise<string[]> {
   if ("all" in audience) {
-    const rows = await db
+    const active = await db
       .selectDistinct({ id: enrollment.studentId })
       .from(enrollment)
       .innerJoin(user, eq(user.id, enrollment.studentId))
-      .where(and(ne(enrollment.status, "dropped"), inArray(user.role, ["student", "trial"])));
-    return rows.map((r) => r.id);
+      .where(and(eq(enrollment.status, "active"), eq(user.role, "student")));
+    const ids = new Set(active.map((r) => r.id));
+    if (audience.includeFormer) {
+      const students = await db.select({ id: user.id }).from(user).where(eq(user.role, "student"));
+      for (const s of students) ids.add(s.id);
+    }
+    if (audience.includeTrials) {
+      const trials = await db.select({ id: user.id }).from(user).where(eq(user.role, "trial"));
+      for (const s of trials) ids.add(s.id);
+    }
+    return [...ids];
   }
   if ("classGroupIds" in audience) {
     if (audience.classGroupIds.length === 0) return [];

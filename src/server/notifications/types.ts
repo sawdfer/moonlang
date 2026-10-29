@@ -23,11 +23,8 @@ const ALWAYS_EMAILED = new Set<string>([
   NOTIFICATION_TYPES.priceChange,
 ]);
 
-/** E-mails the user can turn off with "non-essential e-mails" (future-phase content updates). */
-const NON_ESSENTIAL = new Set<string>([
-  NOTIFICATION_TYPES.materialsAvailable,
-  NOTIFICATION_TYPES.taskPending,
-]);
+/** E-mails the user could turn off. Empty: every e-mail is essential (V9). */
+const NON_ESSENTIAL = new Set<string>([]);
 
 /**
  * Whether a notification e-mail goes out given the user's preference.
