@@ -113,7 +113,7 @@ export function TwoFactorPanel({
 
   if (setup) {
     return (
-      <form onSubmit={confirmEnroll} className="flex flex-col gap-4">
+      <form method="post" onSubmit={confirmEnroll} className="flex flex-col gap-4">
         <h2 className="font-display text-xl font-semibold">{t("setupTitle")}</h2>
         <ol className="flex list-decimal flex-col gap-2 pl-5 text-sm">
           <li>{t("setupStep1")}</li>
@@ -145,7 +145,7 @@ export function TwoFactorPanel({
 
   if (!enabled) {
     return (
-      <form onSubmit={startEnroll} className="flex flex-col gap-4">
+      <form method="post" onSubmit={startEnroll} className="flex flex-col gap-4">
         <h2 className="font-display text-xl font-semibold">{t("twoFactorTitle")}</h2>
         <p className="text-sm text-muted-foreground">{t("twoFactorOff")}</p>
         <PasswordField label={t("passwordLabel")} />
@@ -163,7 +163,7 @@ export function TwoFactorPanel({
       <p className="text-sm">{t("twoFactorOn")}</p>
       <details className="flex flex-col gap-3">
         <summary className="cursor-pointer text-sm font-semibold">{t("regenerate")}</summary>
-        <form onSubmit={regenerateCodes} className="mt-3 flex flex-col gap-3">
+        <form method="post" onSubmit={regenerateCodes} className="mt-3 flex flex-col gap-3">
           <PasswordField id="regenerate-password" label={t("passwordLabel")} />
           <Button type="submit" variant="outline" disabled={pending}>
             {t("regenerate")}
@@ -173,7 +173,7 @@ export function TwoFactorPanel({
       {canDisable && (
         <details className="flex flex-col gap-3">
           <summary className="cursor-pointer text-sm font-semibold">{t("disable")}</summary>
-          <form onSubmit={disable} className="mt-3 flex flex-col gap-3">
+          <form method="post" onSubmit={disable} className="mt-3 flex flex-col gap-3">
             <PasswordField id="disable-password" label={t("passwordLabel")} />
             <Button type="submit" variant="destructive" disabled={pending}>
               {t("disable")}

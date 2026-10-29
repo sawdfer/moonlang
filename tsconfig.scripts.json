@@ -1,0 +1,10 @@
+{
+  // Used by `tsx` for Node scripts (seed): "server-only" would throw outside Next.js.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"],
+      "server-only": ["./src/test/server-only.ts"]
+    }
+  }
+}

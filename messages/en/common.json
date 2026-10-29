@@ -24,5 +24,19 @@
     "themeSystem": "Automatic",
     "themeLight": "Light",
     "themeDark": "Night mode"
+  },
+  "nav": {
+    "label": "Navigation",
+    "dashboard": "Dashboard",
+    "agenda": "Schedule",
+    "classes": "Classes",
+    "finance": "Finance",
+    "whatsapp": "WhatsApp",
+    "announcements": "Announcements",
+    "invites": "Invites",
+    "staff": "Team",
+    "settings": "Settings",
+    "lessons": "My lessons",
+    "account": "My account"
   }
 }

@@ -2,7 +2,7 @@ import { getSessionCookie } from "better-auth/cookies";
 import { type NextRequest, NextResponse } from "next/server";
 
 /** Areas that require a signed-in user. Real authorization happens on the server (src/server/auth). */
-const PROTECTED_PREFIXES = ["/teacher", "/student", "/admin"];
+const PROTECTED_PREFIXES = ["/teacher", "/student", "/admin", "/team", "/account", "/consent"];
 
 function buildCsp(nonce: string) {
   const isDev = process.env.NODE_ENV === "development";
@@ -19,7 +19,8 @@ function buildCsp(nonce: string) {
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
-    "upgrade-insecure-requests",
+    // In local development the app runs on plain http, where this would break redirects.
+    ...(isDev ? [] : ["upgrade-insecure-requests"]),
   ].join("; ");
 }
 

@@ -152,7 +152,9 @@ export const lessonAttendance = pgTable(
     markedById: text("marked_by_id").references(() => user.id),
     updatedAt: updatedAt(),
   },
-  (t) => [primaryKey({ columns: [t.lessonId, t.studentId] })],
+  (t) => [
+    primaryKey({ name: "lesson_attendance_pk", columns: [t.lessonId, t.studentId] }),
+  ],
 );
 
 /** Days the teacher is unavailable; weekly lessons on these days are cancelled (F-004). */

@@ -24,5 +24,19 @@
     "themeSystem": "Automático",
     "themeLight": "Claro",
     "themeDark": "Modo noite"
+  },
+  "nav": {
+    "label": "Navegação",
+    "dashboard": "Painel",
+    "agenda": "Agenda",
+    "classes": "Turmas",
+    "finance": "Financeiro",
+    "whatsapp": "WhatsApp",
+    "announcements": "Comunicados",
+    "invites": "Convites",
+    "staff": "Equipe",
+    "settings": "Configurações",
+    "lessons": "Minhas aulas",
+    "account": "Minha conta"
   }
 }

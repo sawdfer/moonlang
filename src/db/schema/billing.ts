@@ -6,11 +6,13 @@ import {
   jsonb,
   pgEnum,
   pgTable,
-  primaryKey,
   smallint,
   text,
   timestamp,
+  unique,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { createdAt, id, updatedAt } from "./_shared";
 import { user } from "./auth";
 import { enrollment, lesson } from "./classes";
@@ -48,6 +50,9 @@ export const priceChange = pgTable("price_change", {
 export const priceChangeExemption = pgTable(
   "price_change_exemption",
   {
+    // Surrogate id + unique pair: a composite primary key here makes
+    // drizzle-kit re-create the constraint on every push (PGlite).
+    id: id(),
     priceChangeId: text("price_change_id")
       .notNull()
       .references(() => priceChange.id, { onDelete: "cascade" }),
@@ -55,7 +60,7 @@ export const priceChangeExemption = pgTable(
       .notNull()
       .references(() => enrollment.id, { onDelete: "cascade" }),
   },
-  (t) => [primaryKey({ columns: [t.priceChangeId, t.enrollmentId] })],
+  (t) => [unique("price_change_exemption_unique").on(t.priceChangeId, t.enrollmentId)],
 );
 
 export const charge = pgTable(
@@ -86,7 +91,13 @@ export const charge = pgTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [index("charge_student_idx").on(t.studentId, t.status)],
+  (t) => [
+    index("charge_student_idx").on(t.studentId, t.status),
+    // Safety net: never two cycle charges for the same enrollment and period (F-007).
+    uniqueIndex("charge_cycle_unique")
+      .on(t.enrollmentId, t.periodStart)
+      .where(sql`${t.kind} in ('first_prorated', 'monthly') and ${t.status} <> 'cancelled'`),
+  ],
 );
 
 /** Percentage coupons applied for a number of monthly charges (RN-017). */

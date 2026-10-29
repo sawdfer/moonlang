@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
-import { ActionForm } from "../_components/action-form";
-import { FormError } from "../_components/form-message";
+import { ActionForm } from "@/components/forms/action-form";
+import { FormError } from "@/components/forms/form-message";
 import { acceptTermsAction, type ConsentState } from "./actions";
 
 const initialState: ConsentState = {};

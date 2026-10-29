@@ -72,7 +72,7 @@ export function LoginForm() {
 
   if (step !== "password") {
     return (
-      <form key={step} onSubmit={onSubmitCode} className="flex flex-col gap-4">
+      <form key={step} method="post" onSubmit={onSubmitCode} className="flex flex-col gap-4">
         <p className="text-sm text-muted-foreground">
           {tf(step === "totp" ? "totpHelp" : "backupHelp")}
         </p>
@@ -111,7 +111,7 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={onSubmitPassword} className="flex flex-col gap-4">
+    <form method="post" onSubmit={onSubmitPassword} className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
         <Label htmlFor="identifier">{t("identifier")}</Label>
         <Input id="identifier" name="identifier" autoComplete="username" required />

@@ -5,8 +5,8 @@ import { useActionState, useState } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ActionForm } from "../../_components/action-form";
-import { FormError } from "../../_components/form-message";
+import { ActionForm } from "@/components/forms/action-form";
+import { FormError } from "@/components/forms/form-message";
 import { createInviteAction, type CreateInviteState } from "./actions";
 
 const initialState: CreateInviteState = { errors: {} };

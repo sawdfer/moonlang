@@ -13,5 +13,10 @@ export default defineConfig({
     environment: "node",
     include: ["src/**/*.test.ts"],
     testTimeout: 30_000,
+    // Placeholders so modules that validate the environment can load in tests.
+    env: {
+      BETTER_AUTH_SECRET: "test-only-secret-with-at-least-32-characters",
+      BETTER_AUTH_URL: "http://localhost:3000",
+    },
   },
 });

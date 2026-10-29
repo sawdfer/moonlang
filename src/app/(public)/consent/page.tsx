@@ -4,7 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { Card } from "@/components/ui/card";
 import { homePathFor } from "@/server/auth/roles";
 import { hasPendingConsent, requireSignedIn } from "@/server/auth/session";
-import { SignOutButton } from "../_components/sign-out-button";
+import { SignOutButton } from "@/components/forms/sign-out-button";
 import { ConsentForm } from "./consent-form";
 
 export const metadata: Metadata = { title: "Termos atualizados" };

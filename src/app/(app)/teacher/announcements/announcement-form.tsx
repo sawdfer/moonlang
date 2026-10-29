@@ -49,7 +49,7 @@ export function AnnouncementForm({
   ];
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-5">
+    <form method="post" onSubmit={onSubmit} className="flex flex-col gap-5">
       <div className="flex flex-col gap-2">
         <Label htmlFor="announcement-body">{t("message")}</Label>
         <textarea

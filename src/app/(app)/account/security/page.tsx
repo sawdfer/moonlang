@@ -6,7 +6,6 @@ import { Card } from "@/components/ui/card";
 import { canDisableTwoFactor } from "@/server/auth/access";
 import { homePathFor, isStaff } from "@/server/auth/roles";
 import { requireSignedIn } from "@/server/auth/session";
-import { SignOutButton } from "../../_components/sign-out-button";
 import { SessionsPanel } from "./sessions-panel";
 import { TwoFactorPanel } from "./two-factor-panel";
 
@@ -50,7 +49,6 @@ export default async function SecurityPage() {
             {t("back")}
           </Link>
         )}
-        <SignOutButton />
       </div>
     </main>
   );
