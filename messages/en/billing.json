@@ -9,7 +9,8 @@
     "kind": {
       "first_prorated": "First charge (prorated)",
       "monthly": "Monthly fee",
-      "extra_lesson": "Extra lesson"
+      "extra_lesson": "Extra lesson",
+      "one_off": "One-off charge"
     },
     "enrollmentStatus": {
       "active": "Active",
@@ -53,7 +54,23 @@
       "dropout": "Register drop-out",
       "dropoutReason": "Reason (optional)",
       "confirmDropout": "Confirm drop-out",
-      "monthlyPrice": "{plan} · {price}"
+      "monthlyPrice": "{plan} · {price}",
+      "unblock": "Unblock",
+      "confirmUnblock": "Confirm unblock",
+      "reason": "Reason (required)",
+      "edit": "Edit",
+      "save": "Save",
+      "cancelCharge": "Cancel charge",
+      "confirmCancelCharge": "Cancel this charge",
+      "amount": "Amount (R$)",
+      "dueDate": "Due date",
+      "addCharge": "Add charge",
+      "kind": "Type",
+      "oneOff": "One-off",
+      "periodStart": "Cycle start (optional)",
+      "periodEnd": "Cycle end (optional)",
+      "periodHint": "Only fill in the cycle for monthly fees. A cycle can't have two charges.",
+      "waived": "Excluded from blocking (manual unblock)"
     },
     "admin": {
       "title": "Settings ⚙️",
@@ -85,10 +102,6 @@
       "openEmpty": "Nothing open. All caught up! ✨"
     },
     "notifications": {
-      "dueSoonTitle": "Your monthly fee is due on {date} 📅",
-      "dueSoonBody": "Amount: {amount}. The Pix key is on your payments page.",
-      "overdueTitle": "Overdue payment ⏰",
-      "overdueBody": "The {amount} charge was due on {date}. The Pix key is on your payments page.",
       "dueSoonWhatsApp": "Hi, {name}! Just a reminder that your {amount} monthly fee is due on {date}. The Pix key is on your payments page on Moonlang 🌙",
       "overdueWhatsApp": "Hi, {name}! The {amount} charge due on {date} is still open. Could you check it for me? The Pix key is on your payments page on Moonlang 🌙"
     },
@@ -102,7 +115,12 @@
       "invalid_amount": "Check the amount.",
       "missing_profile": "The student's profile isn't complete yet.",
       "dropped": "This enrollment isn't active.",
-      "unknown": "Something went wrong. Try again."
+      "unknown": "Something went wrong. Try again.",
+      "reason_required": "Please add a reason: it goes into the history.",
+      "invalid_date": "Check the dates.",
+      "duplicate_cycle": "This cycle already has a charge.",
+      "not_blocked": "This student isn't blocked.",
+      "not_editable": "Only open charges can be changed."
     }
   }
 }

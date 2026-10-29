@@ -9,7 +9,8 @@
     "kind": {
       "first_prorated": "Primeira cobrança (proporcional)",
       "monthly": "Mensalidade",
-      "extra_lesson": "Aula extra"
+      "extra_lesson": "Aula extra",
+      "one_off": "Cobrança avulsa"
     },
     "enrollmentStatus": {
       "active": "Ativa",
@@ -53,7 +54,23 @@
       "dropout": "Registrar desistência",
       "dropoutReason": "Motivo (opcional)",
       "confirmDropout": "Confirmar desistência",
-      "monthlyPrice": "{plan} · {price}"
+      "monthlyPrice": "{plan} · {price}",
+      "unblock": "Desbloquear",
+      "confirmUnblock": "Confirmar desbloqueio",
+      "reason": "Motivo (obrigatório)",
+      "edit": "Editar",
+      "save": "Salvar",
+      "cancelCharge": "Anular",
+      "confirmCancelCharge": "Anular cobrança",
+      "amount": "Valor (R$)",
+      "dueDate": "Vencimento",
+      "addCharge": "Adicionar cobrança",
+      "kind": "Tipo",
+      "oneOff": "Avulsa",
+      "periodStart": "Início do ciclo (opcional)",
+      "periodEnd": "Fim do ciclo (opcional)",
+      "periodHint": "Preencha o ciclo só para mensalidades. Um ciclo não pode ter duas cobranças.",
+      "waived": "Liberada do bloqueio (desbloqueio manual)"
     },
     "admin": {
       "title": "Configurações ⚙️",
@@ -85,10 +102,6 @@
       "openEmpty": "Nada em aberto. Tudo em dia! ✨"
     },
     "notifications": {
-      "dueSoonTitle": "Sua mensalidade vence em {date} 📅",
-      "dueSoonBody": "Valor: {amount}. A chave Pix está no seu financeiro.",
-      "overdueTitle": "Cobrança em atraso ⏰",
-      "overdueBody": "A cobrança de {amount} venceu em {date}. A chave Pix está no seu financeiro.",
       "dueSoonWhatsApp": "Oi, {name}! Passando para lembrar que sua mensalidade de {amount} vence em {date}. A chave Pix está no seu financeiro na Moonlang 🌙",
       "overdueWhatsApp": "Oi, {name}! A cobrança de {amount}, que venceu em {date}, ainda está em aberto. Consegue ver isso pra mim? A chave Pix está no seu financeiro na Moonlang 🌙"
     },
@@ -102,7 +115,12 @@
       "invalid_amount": "Confira o valor.",
       "missing_profile": "O cadastro do aluno ainda não está completo.",
       "dropped": "Essa participação não está ativa.",
-      "unknown": "Algo deu errado. Tente de novo."
+      "unknown": "Algo deu errado. Tente de novo.",
+      "reason_required": "Conta o motivo, por favor: ele fica no histórico.",
+      "invalid_date": "Confira as datas.",
+      "duplicate_cycle": "Esse ciclo já tem uma cobrança.",
+      "not_blocked": "Esse aluno não está bloqueado.",
+      "not_editable": "Só dá para mudar cobranças em aberto."
     }
   }
 }

@@ -22,7 +22,11 @@ vi.mock("@/db", () => ({
 
 const {
   BillingError,
+  addCharge,
   addExtraLessonCharge,
+  cancelCharge,
+  editCharge,
+  manualUnblock,
   markChargePaid,
   registerDropout,
   removeExtraLessonCharge,
@@ -153,27 +157,31 @@ describe("daily job (RN-013, RN-015, RN-025, RN-027)", () => {
     await markChargePaid(teacher, { chargeId: first.id, receivedCents: 8500, paidOn: "2026-11-21" }, at("2026-11-21"));
   }
 
-  it("RN-025: generates the R$ 169 monthly charge for 05/12 with a 3-day notice, once", async () => {
+  it("V6: generates the R$ 169 monthly charge 7 days before 05/12, and the notice 3 days before, once", async () => {
     await startedPlan();
-    await runDailyBilling(at("2026-12-01"));
+    await runDailyBilling(at("2026-11-27"));
     expect(await chargesOf()).toHaveLength(1);
-    await runDailyBilling(at("2026-12-02"));
-    await runDailyBilling(at("2026-12-02"));
+    await runDailyBilling(at("2026-11-28"));
     const charges = await chargesOf();
     expect(charges).toHaveLength(2);
     expect(charges[1]).toMatchObject({ kind: "monthly", amountCents: 16900, dueDate: "2026-12-05", status: "pending" });
-    const notes = await state.db.select().from(notification).where(eq(notification.type, "billing.due_soon"));
+    expect(await state.db.$count(notification, eq(notification.type, "charge_due_soon"))).toBe(0);
+    await runDailyBilling(at("2026-12-02"));
+    await runDailyBilling(at("2026-12-02"));
+    await runDailyBilling(at("2026-12-03"));
+    const notes = await state.db.select().from(notification).where(eq(notification.type, "charge_due_soon"));
     expect(notes).toHaveLength(1);
   });
 
   it("RN-015: marks overdue, blocks with 2 open monthly charges, stops charging, and unblocks with a prorated charge", async () => {
     await startedPlan();
-    for (const day of ["2026-12-02", "2026-12-06", "2027-01-02", "2027-01-05", "2027-01-06"]) {
+    for (const day of ["2026-11-28", "2026-12-06", "2026-12-07", "2026-12-29", "2027-01-05", "2027-01-06"]) {
       await runDailyBilling(at(day));
     }
     expect(await enrollmentStatus()).toBe("blocked");
-    const overdueNotes = await state.db.select().from(notification).where(eq(notification.type, "billing.overdue"));
-    expect(overdueNotes).toHaveLength(2);
+    expect(await state.db.$count(notification, eq(notification.type, "charge_overdue"))).toBe(2);
+    // RN-015: warned once, while only the 05/12 charge was overdue.
+    expect(await state.db.$count(notification, eq(notification.type, "block_warning"))).toBe(1);
 
     // No new charge while blocked.
     await runDailyBilling(at("2027-02-03"));
@@ -196,6 +204,97 @@ describe("daily job (RN-013, RN-015, RN-025, RN-027)", () => {
     await runDailyBilling(at("2026-12-03"));
     expect(await chargesOf()).toHaveLength(1);
     expect(await enrollmentStatus()).toBe("dropped");
+  });
+});
+
+describe("manual unblock and admin charge management (RN-015, V7)", () => {
+  async function blockedStudent() {
+    const first = await startPlan(teacher, { enrollmentId: "enr", dueDay: 5, startDate: "2026-11-21" }, at("2026-11-21"));
+    await markChargePaid(teacher, { chargeId: first.id, receivedCents: 8500, paidOn: "2026-11-21" }, at("2026-11-21"));
+    for (const day of ["2026-11-28", "2026-12-29", "2027-01-06"]) await runDailyBilling(at(day));
+    expect(await enrollmentStatus()).toBe("blocked");
+    return (await chargesOf()).filter((c) => c.kind === "monthly");
+  }
+
+  it("V7/RN-015: the teacher unblocks despite overdue charges; a reason is required; the next jobs keep it unblocked", async () => {
+    await blockedStudent();
+    await expect(manualUnblock(teacher, { enrollmentId: "enr", reason: " " }, at("2027-01-07"))).rejects.toThrow(
+      "reason_required",
+    );
+    await expect(
+      manualUnblock(otherTeacher, { enrollmentId: "enr", reason: "Acordo" }, at("2027-01-07")),
+    ).rejects.toThrow("forbidden");
+    await manualUnblock(teacher, { enrollmentId: "enr", reason: "Acordo no WhatsApp" }, at("2027-01-07"));
+    expect(await enrollmentStatus()).toBe("active");
+
+    await runDailyBilling(at("2027-01-08"));
+    expect(await enrollmentStatus()).toBe("active");
+    // The cycle 05/01–04/02 was already charged (still open), so no prorated charge.
+    expect(await chargesOf()).toHaveLength(3);
+    const [audit] = await state.db.select().from(auditLog).where(eq(auditLog.action, "enrollment.unblocked_manually"));
+    expect(audit).toMatchObject({ actorId: "teacher", reason: "Acordo no WhatsApp" });
+
+    // Charges are generated again and count for blocking once overdue.
+    for (const day of ["2027-01-29", "2027-02-06", "2027-02-26", "2027-03-06"]) await runDailyBilling(at(day));
+    expect(await enrollmentStatus()).toBe("blocked");
+  });
+
+  it("V7: only admins cancel, add or edit charges, always with a reason and an audit entry", async () => {
+    const [dec] = await blockedStudent();
+    await expect(cancelCharge(teacher, { chargeId: dec!.id, reason: "x" })).rejects.toThrow("forbidden");
+    await expect(editCharge(teacher, { chargeId: dec!.id, amountCents: 1, dueDate: "2027-01-10", reason: "x" })).rejects.toThrow(
+      "forbidden",
+    );
+    await expect(
+      addCharge(teacher, { enrollmentId: "enr", kind: "extra_lesson", amountCents: 100, dueDate: "2027-01-10", reason: "x" }),
+    ).rejects.toThrow("forbidden");
+    await expect(cancelCharge(admin, { chargeId: dec!.id })).rejects.toThrow("reason_required");
+  });
+
+  it("V7/RN-015: cancelling an overdue charge recomputes the block and waives its cycle", async () => {
+    const [dec, jan] = await blockedStudent();
+    await cancelCharge(admin, { chargeId: dec!.id, reason: "Combinado: dezembro de presente" }, at("2027-01-07"));
+    expect(await enrollmentStatus()).toBe("blocked"); // January is still overdue
+    await cancelCharge(admin, { chargeId: jan!.id, reason: "Férias combinadas" }, at("2027-01-07"));
+    expect(await enrollmentStatus()).toBe("active");
+    await runDailyBilling(at("2027-01-08"));
+    // The cancelled cycles are not generated again.
+    expect((await chargesOf()).filter((c) => c.status !== "cancelled" && c.kind === "monthly")).toHaveLength(0);
+    expect(await state.db.$count(auditLog, eq(auditLog.action, "charge.cancelled"))).toBe(2);
+  });
+
+  it("V7/RN-015: moving an overdue due date forward makes it pending and lifts the block", async () => {
+    const [dec, jan] = await blockedStudent();
+    await editCharge(admin, { chargeId: dec!.id, amountCents: 15000, dueDate: "2027-01-20", reason: "Desconto e prazo" }, at("2027-01-07"));
+    const [edited] = await state.db.select().from(charge).where(eq(charge.id, dec!.id));
+    expect(edited).toMatchObject({ amountCents: 15000, dueDate: "2027-01-20", status: "pending" });
+    expect(await enrollmentStatus()).toBe("blocked"); // January is still overdue
+    await editCharge(admin, { chargeId: jan!.id, amountCents: 16900, dueDate: "2027-01-20", reason: "Novo prazo" }, at("2027-01-07"));
+    expect(await enrollmentStatus()).toBe("active");
+    const [audit] = await state.db.select().from(auditLog).where(eq(auditLog.action, "charge.edited"));
+    expect(audit?.data).toMatchObject({ from: { amountCents: 16900 }, to: { amountCents: 15000 } });
+  });
+
+  it("V7: an added overdue monthly charge can block; a second charge for the same cycle is refused", async () => {
+    const first = await startPlan(teacher, { enrollmentId: "enr", dueDay: 5, startDate: "2026-11-21" }, at("2026-11-21"));
+    await markChargePaid(admin, { chargeId: first.id, receivedCents: 8500, paidOn: "2026-11-21" }, at("2026-11-21"));
+    await runDailyBilling(at("2026-11-28"));
+    await expect(
+      addCharge(admin, {
+        enrollmentId: "enr",
+        kind: "monthly",
+        amountCents: 16900,
+        dueDate: "2026-12-05",
+        periodStart: "2026-12-05",
+        periodEnd: "2027-01-04",
+        reason: "Duplicada",
+      }),
+    ).rejects.toThrow("duplicate_cycle");
+
+    await addCharge(admin, { enrollmentId: "enr", kind: "monthly", amountCents: 16900, dueDate: "2026-11-01", reason: "Outubro antigo" }, at("2026-12-07"));
+    await addCharge(admin, { enrollmentId: "enr", kind: "monthly", amountCents: 16900, dueDate: "2026-11-02", reason: "Novembro antigo" }, at("2026-12-07"));
+    expect(await enrollmentStatus()).toBe("blocked");
+    expect(await state.db.$count(auditLog, eq(auditLog.action, "charge.added"))).toBe(2);
   });
 });
 

@@ -2,9 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   type ChargeFacts,
   blockingDecision,
+  blockWarning,
   chargeAfterUnblock,
   countWeeklyLessons,
+  coveredUntil,
   cycleEnd,
+  dueSoonCharges,
   effectiveStatus,
   extraLessonDueDate,
   extraLessonPriceCents,
@@ -81,7 +84,7 @@ describe("first prorated charge (RN-025)", () => {
       dueDay: 5,
       monthlyPriceCents: PLAN_1H,
       group: tuesdayGroup,
-      today: "2026-12-02",
+      today: "2026-11-28",
     });
     expect(next).toEqual({
       kind: "monthly",
@@ -159,9 +162,19 @@ describe("monthly charges (RN-013, RN-025)", () => {
   };
   const base = { status: "active" as const, dueDay: 5, monthlyPriceCents: PLAN_1H, group: tuesdayGroup };
 
-  it("RN-025: is generated 3 days before the cycle starts, not earlier", () => {
-    expect(nextMonthlyCharge({ ...base, charges: [paidFirst], today: "2026-12-01" })).toBeNull();
-    expect(nextMonthlyCharge({ ...base, charges: [paidFirst], today: "2026-12-02" })?.dueDate).toBe("2026-12-05");
+  it("V6: is generated 7 days before the due date, not earlier", () => {
+    expect(nextMonthlyCharge({ ...base, charges: [paidFirst], today: "2026-11-27" })).toBeNull();
+    expect(nextMonthlyCharge({ ...base, charges: [paidFirst], today: "2026-11-28" })?.dueDate).toBe("2026-12-05");
+  });
+
+  it("V6: the \"due soon\" notice still waits until 3 days before", () => {
+    const charges = [paidFirst, monthly("2026-12-05", "pending", "2027-01-04")];
+    expect(dueSoonCharges(charges, "2026-11-28")).toHaveLength(0);
+    expect(dueSoonCharges(charges, "2026-12-01")).toHaveLength(0);
+    expect(dueSoonCharges(charges, "2026-12-02")).toHaveLength(1);
+    expect(dueSoonCharges(charges, "2026-12-04")).toHaveLength(1);
+    expect(dueSoonCharges(charges, "2026-12-05")).toHaveLength(0);
+    expect(dueSoonCharges(charges, "2026-12-06")).toHaveLength(0);
   });
 
   it("RN-025: continues from the last covered cycle", () => {
@@ -172,7 +185,7 @@ describe("monthly charges (RN-013, RN-025)", () => {
       dueDate: "2027-01-05",
     });
     // Already generated: nothing new until the next lead window.
-    expect(nextMonthlyCharge({ ...base, charges, today: "2026-12-20" })).toBeNull();
+    expect(nextMonthlyCharge({ ...base, charges, today: "2026-12-28" })).toBeNull();
   });
 
   it("RN-013: a cycle with a 5th weekly lesson still costs the monthly price", () => {
@@ -288,6 +301,78 @@ describe("overdue and blocking (RN-015)", () => {
       today: "2027-01-07",
     });
     expect(draft).toMatchObject({ periodStart: "2027-01-10", amountCents: PLAN_1H, dueDate: "2027-01-10" });
+  });
+});
+
+describe("manual unblock and admin changes (RN-015, V7)", () => {
+  const twoOverdue = () => [monthly("2026-11-10", "overdue", "2026-12-09"), monthly("2026-12-10", "overdue", "2027-01-09")];
+
+  it("V7/RN-015: waived overdue charges no longer block, so the student stays unblocked", () => {
+    const waived = twoOverdue().map((c) => ({ ...c, blockWaivedAt: new Date() }));
+    expect(blockingDecision("blocked", waived, "2026-12-20")).toBe("unblock");
+    expect(blockingDecision("active", waived, "2026-12-20")).toBeNull();
+  });
+
+  it("V7/RN-015: new overdue charges after a manual unblock count again", () => {
+    const charges = [
+      ...twoOverdue().map((c) => ({ ...c, blockWaivedAt: new Date() })),
+      monthly("2027-01-10", "pending", "2027-02-09"),
+      monthly("2027-02-10", "pending", "2027-03-09"),
+    ];
+    expect(blockingDecision("active", charges, "2027-01-11")).toBeNull();
+    expect(blockingDecision("active", charges, "2027-02-11")).toBe("block");
+  });
+
+  it("V7: a cancelled monthly charge waives its cycle instead of being generated again", () => {
+    const charges = [monthly("2026-11-10", "paid", "2026-12-09"), monthly("2026-12-10", "cancelled", "2027-01-09")];
+    expect(coveredUntil(charges)).toBe("2027-01-09");
+    const next = nextMonthlyCharge({
+      status: "active",
+      charges,
+      dueDay: 10,
+      monthlyPriceCents: PLAN_1H,
+      group: tuesdayGroup,
+      today: "2027-01-03",
+    });
+    expect(next?.dueDate).toBe("2027-01-10");
+  });
+
+  it("V7: a cancelled first charge does not start the plan", () => {
+    const charges: ChargeFacts[] = [
+      { kind: "first_prorated", status: "cancelled", dueDate: "2026-11-21", periodStart: "2026-11-21", periodEnd: "2026-12-04" },
+    ];
+    expect(coveredUntil(charges)).toBeNull();
+  });
+
+  it("V7/RN-015: cancelling one of two overdue charges lifts the block", () => {
+    const charges = twoOverdue();
+    charges[0]!.status = "cancelled";
+    expect(blockingDecision("blocked", charges, "2026-12-20")).toBeNull(); // one overdue left
+    charges[1]!.status = "cancelled";
+    expect(blockingDecision("blocked", charges, "2026-12-20")).toBe("unblock");
+  });
+});
+
+describe("warning before the block (RN-015)", () => {
+  it("RN-015: with 1 overdue monthly charge, warns with the next due date as the deadline", () => {
+    const charges = [monthly("2026-11-10", "overdue", "2026-12-09"), monthly("2026-12-10", "pending", "2027-01-09")];
+    const warning = blockWarning({ status: "active", charges, dueDay: 10, today: "2026-12-05" });
+    expect(warning?.charge.dueDate).toBe("2026-11-10");
+    expect(warning?.deadline).toBe("2026-12-10");
+  });
+
+  it("RN-015: before the next charge exists, the deadline is the next cycle start", () => {
+    const charges = [monthly("2026-11-10", "overdue", "2026-12-09")];
+    expect(blockWarning({ status: "active", charges, dueDay: 10, today: "2026-11-20" })?.deadline).toBe("2026-12-10");
+  });
+
+  it("RN-015: no warning without overdue charges, once blocked, or for waived charges (V7)", () => {
+    const one = [monthly("2026-11-10", "overdue", "2026-12-09")];
+    expect(blockWarning({ status: "active", charges: [monthly("2026-11-10", "pending", "2026-12-09")], dueDay: 10, today: "2026-11-05" })).toBeNull();
+    expect(blockWarning({ status: "blocked", charges: one, dueDay: 10, today: "2026-11-20" })).toBeNull();
+    expect(
+      blockWarning({ status: "active", charges: [{ ...one[0]!, blockWaivedAt: new Date() }], dueDay: 10, today: "2026-11-20" }),
+    ).toBeNull();
   });
 });
 

@@ -84,6 +84,8 @@ export const charge = pgTable(
     paidAt: timestamp("paid_at", { withTimezone: true }),
     receivedCents: integer("received_cents"),
     note: text("note"),
+    /** Staff unblocked the student despite this overdue charge; it no longer counts for blocking (RN-015, V7). */
+    blockWaivedAt: timestamp("block_waived_at", { withTimezone: true }),
     /** For extra lessons (RN-026). */
     lessonId: text("lesson_id").references(() => lesson.id, {
       onDelete: "set null",

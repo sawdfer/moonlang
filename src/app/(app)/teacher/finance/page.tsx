@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { toDateString } from "@/lib/dates";
 import { formatBRL } from "@/lib/money";
 import { cn } from "@/lib/utils";
+import { isAdmin } from "@/server/auth/roles";
 import { requireStaff } from "@/server/auth/session";
 import {
   type ChargeFilter,
@@ -12,10 +13,16 @@ import {
   listOpenEnrollments,
   listPlansToStart,
 } from "@/server/billing/queries";
-import { parseDay } from "@/server/billing/rules";
+import { chargeLabelKey, parseDay } from "@/server/billing/rules";
 import { getBillingSettings } from "@/server/billing/settings";
 import { MarkPaidButton, UndoPaymentButton } from "./_components/charge-actions";
 import { DropoutButton } from "./_components/dropout-button";
+import {
+  AddChargeButton,
+  CancelChargeButton,
+  EditChargeButton,
+  UnblockButton,
+} from "./_components/manage-actions";
 import { StartPlanForm } from "./_components/start-plan-form";
 import { StatusBadge } from "./_components/status-badge";
 
@@ -45,6 +52,9 @@ export default async function TeacherFinancePage({
     getBillingSettings(),
   ]);
   const today = toDateString(new Date());
+  // Managing charges is admin/root only (V7); the server checks it again.
+  const admin = isAdmin(actor.role);
+  const reais = (cents: number) => (cents / 100).toFixed(2).replace(".", ",");
   const day = (d: string) => format.dateTime(parseDay(d), { day: "2-digit", month: "2-digit", year: "numeric" });
 
   return (
@@ -89,7 +99,7 @@ export default async function TeacherFinancePage({
                       <StatusBadge status={s} />
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {tKind(c.kind)}
+                      {tKind(chargeLabelKey(c))}
                       {groupName ? ` · ${groupName}` : ""}
                       {c.periodStart && c.periodEnd
                         ? ` · ${tBilling("period", { start: day(c.periodStart), end: day(c.periodEnd) })}`
@@ -106,14 +116,21 @@ export default async function TeacherFinancePage({
                       </p>
                     )}
                     {c.note && <p className="text-sm text-muted-foreground">“{c.note}”</p>}
+                    {c.blockWaivedAt && s === "overdue" && (
+                      <p className="text-xs text-muted-foreground">{t("waived")}</p>
+                    )}
                   </div>
-                  <div className="sm:shrink-0">
+                  <div className="flex flex-wrap items-start gap-2 sm:shrink-0 sm:justify-end">
                     {(s === "pending" || s === "overdue") && (
-                      <MarkPaidButton
-                        chargeId={c.id}
-                        amount={(c.amountCents / 100).toFixed(2).replace(".", ",")}
-                        today={today}
-                      />
+                      <>
+                        <MarkPaidButton chargeId={c.id} amount={reais(c.amountCents)} today={today} />
+                        {admin && (
+                          <>
+                            <EditChargeButton chargeId={c.id} amount={reais(c.amountCents)} dueDate={c.dueDate} />
+                            <CancelChargeButton chargeId={c.id} />
+                          </>
+                        )}
+                      </>
                     )}
                     {s === "paid" && <UndoPaymentButton chargeId={c.id} />}
                   </div>
@@ -177,7 +194,11 @@ export default async function TeacherFinancePage({
                     </span>
                   </p>
                 </div>
-                <DropoutButton enrollmentId={e.enrollmentId} />
+                <div className="flex flex-wrap items-start gap-2">
+                  {e.status === "blocked" && <UnblockButton enrollmentId={e.enrollmentId} />}
+                  {admin && <AddChargeButton enrollmentId={e.enrollmentId} today={today} />}
+                  <DropoutButton enrollmentId={e.enrollmentId} />
+                </div>
               </li>
             ))}
           </ul>
