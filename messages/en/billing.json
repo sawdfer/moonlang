@@ -1,0 +1,108 @@
+{
+  "billing": {
+    "status": {
+      "pending": "Pending",
+      "paid": "Paid",
+      "overdue": "Overdue",
+      "cancelled": "Cancelled"
+    },
+    "kind": {
+      "first_prorated": "First charge (prorated)",
+      "monthly": "Monthly fee",
+      "extra_lesson": "Extra lesson"
+    },
+    "enrollmentStatus": {
+      "active": "Active",
+      "blocked": "Blocked",
+      "dropped": "Dropped out"
+    },
+    "period": "{start} to {end}",
+    "teacher": {
+      "title": "Finance 💸",
+      "subtitle": "Who paid, who owes and what's coming up.",
+      "filter": {
+        "open": "Open",
+        "overdue": "Overdue",
+        "paid": "Paid",
+        "all": "All"
+      },
+      "charges": "Charges",
+      "empty": "Nothing here. All caught up! ✨",
+      "due": "Due {date}",
+      "paidOn": "Paid on {date}",
+      "received": "Received: {amount}",
+      "difference": "Difference: {amount}",
+      "markPaid": "Mark as paid",
+      "receivedAmount": "Amount received (R$)",
+      "paidDate": "Payment date",
+      "note": "Note (optional)",
+      "confirmPaid": "Confirm payment",
+      "cancel": "Cancel",
+      "undo": "Undo",
+      "confirmUndo": "Really undo?",
+      "startTitle": "Plans to start",
+      "startHint": "Pick the due day: the platform works out the first prorated charge.",
+      "startEmpty": "No enrollment waiting for a plan.",
+      "dueDay": "Due day",
+      "dueDayLocked": "Same day as the other monthly fees: {day}",
+      "startDate": "Plan start",
+      "existingStudent": "Current student: no prorated charge, the first monthly fee is due on the next due day",
+      "startPlan": "Start plan",
+      "enrollmentsTitle": "Enrollments",
+      "enrollmentsEmpty": "No active enrollments.",
+      "dropout": "Register drop-out",
+      "dropoutReason": "Reason (optional)",
+      "confirmDropout": "Confirm drop-out",
+      "monthlyPrice": "{plan} · {price}"
+    },
+    "admin": {
+      "title": "Settings ⚙️",
+      "subtitle": "Values used by billing.",
+      "pixKey": "Pix key",
+      "pixKeyHint": "Shown to students next to their charges.",
+      "extraHourPrice": "Extra hour price (R$)",
+      "dueDayOptions": "Due day options",
+      "dueDayOptionsHint": "Days from 1 to 28, separated by commas. E.g. 5, 10, 15, 20",
+      "save": "Save",
+      "saved": "Settings saved! ✅",
+      "invalid": "Check the values and try again."
+    },
+    "student": {
+      "title": "My payments 💸",
+      "subtitle": "Your amounts, due dates and the Pix key to pay.",
+      "locked": "Your payments show up here once you start a plan. Shall we? 🚀",
+      "pixTitle": "Pay with Pix",
+      "pixMissing": "The Pix key hasn't been set yet. Talk to Luana.",
+      "copy": "Copy",
+      "copied": "Copied!",
+      "payHint": "After paying in your bank app, Luana confirms it here.",
+      "open": "Open",
+      "history": "History",
+      "total": "Total: {amount}",
+      "due": "Due {date}",
+      "paidOn": "Paid on {date}",
+      "blocked": "Your lessons are paused because of open payments. Once the payment is recorded, everything goes back to normal.",
+      "openEmpty": "Nothing open. All caught up! ✨"
+    },
+    "notifications": {
+      "dueSoonTitle": "Your monthly fee is due on {date} 📅",
+      "dueSoonBody": "Amount: {amount}. The Pix key is on your payments page.",
+      "overdueTitle": "Overdue payment ⏰",
+      "overdueBody": "The {amount} charge was due on {date}. The Pix key is on your payments page.",
+      "dueSoonWhatsApp": "Hi, {name}! Just a reminder that your {amount} monthly fee is due on {date}. The Pix key is on your payments page on Moonlang 🌙",
+      "overdueWhatsApp": "Hi, {name}! The {amount} charge due on {date} is still open. Could you check it for me? The Pix key is on your payments page on Moonlang 🌙"
+    },
+    "errors": {
+      "forbidden": "You're not allowed to do that.",
+      "not_found": "We couldn't find that record.",
+      "invalid_due_day": "Pick one of the available due days.",
+      "already_started": "This plan has already started.",
+      "not_payable": "This charge isn't open.",
+      "not_paid": "This charge isn't paid.",
+      "invalid_amount": "Check the amount.",
+      "missing_profile": "The student's profile isn't complete yet.",
+      "dropped": "This enrollment isn't active.",
+      "unknown": "Something went wrong. Try again."
+    }
+  }
+}
