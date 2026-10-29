@@ -1,0 +1,99 @@
+{
+  "dashboard": {
+    "title": "Painel",
+    "greeting": "Olá, {name}! 🌙",
+    "today": "Hoje é {date}.",
+    "todayLessons": "Aulas de hoje",
+    "join": "Entrar na aula",
+    "noLink": "Sem link de reunião",
+    "details": "Detalhes",
+    "individual": "Aula individual",
+    "participants": "{count, plural, =0 {Sem alunos} one {# aluno} other {# alunos}}",
+    "status": {
+      "pending": "Aguardando aprovação",
+      "confirmed": "Confirmada",
+      "done": "Realizada"
+    },
+    "kind": {
+      "weekly": "Semanal",
+      "extra": "Extra",
+      "one_off": "Avulsa",
+      "trial": "Experimental",
+      "makeup": "Reposição"
+    },
+    "requests": "Pedidos de aula pendentes",
+    "requestedBy": "Pedido de {name}",
+    "review": "Analisar",
+    "people": "Novos alunos e primeiros pagamentos",
+    "newStudents": "Entraram nos últimos 7 dias",
+    "noNewStudents": "Ninguém novo nesta semana.",
+    "joinedOn": "Entrou em {date}",
+    "trial": "Experimental",
+    "student": "Aluno",
+    "awaitingFirstPayment": "Aguardando a primeira cobrança",
+    "noAwaitingFirstPayment": "Nenhuma primeira cobrança em aberto.",
+    "charges": "Cobranças pendentes ou atrasadas",
+    "chargesSummary": "{open} em aberto · {overdue, plural, one {# atrasada} other {# atrasadas}} · total {total}",
+    "dueOn": "Vence em {date}",
+    "overdue": "Atrasada",
+    "pending": "Pendente",
+    "seeAllCharges": "Ver financeiro",
+    "moreCharges": "e mais {count}",
+    "whatsapp": "Fila do WhatsApp",
+    "whatsappCount": "{count, plural, =0 {Nenhuma mensagem para enviar} one {# mensagem para enviar} other {# mensagens para enviar}}",
+    "openQueue": "Abrir fila",
+    "adminShortcuts": "Atalhos do administrador",
+    "settings": "Configurações",
+    "metricsSoon": "As métricas do mês chegam numa próxima versão."
+  },
+  "fun": {
+    "noLessonsToday": {
+      "basic": "Nenhuma aula hoje. Até a lua tira folga às vezes 🌙",
+      "intermediate": "Nenhuma aula hoje. Even the moon takes a day off 🌙",
+      "advanced": "No lessons today. Even the moon takes a day off 🌙"
+    },
+    "noUpcomingLessons": {
+      "basic": "Nenhuma aula marcada por enquanto. Que tal descansar um pouquinho? 😴",
+      "intermediate": "Nenhuma aula marcada por enquanto. Time to chill 😎",
+      "advanced": "No lessons on the calendar yet. Perfect time to binge a series in English 🍿"
+    },
+    "noRequests": {
+      "basic": "Nenhum pedido esperando. Tudo em dia! ✅",
+      "intermediate": "Nenhum pedido esperando. All good! ✅",
+      "advanced": "No pending requests. Smooth sailing ⛵"
+    },
+    "noOpenCharges": {
+      "basic": "Nenhuma cobrança em aberto. Tudo certinho 💜",
+      "intermediate": "Nenhuma cobrança em aberto. Easy peasy 💜",
+      "advanced": "No open charges. Easy peasy lemon squeezy 🍋"
+    },
+    "emptyQueue": {
+      "basic": "Nenhuma mensagem para enviar ✨",
+      "intermediate": "Inbox zero, baby ✨",
+      "advanced": "Inbox zero. Over the moon about it ✨"
+    },
+    "allSet": {
+      "basic": "Tudo pronto por aqui! 🎉",
+      "intermediate": "Tudo pronto! You rock 🎉",
+      "advanced": "All set! You're over the moon 🎉"
+    },
+    "welcome": {
+      "basic": "Que bom ter você aqui! Bem-vindo à Moonlang 🌙",
+      "intermediate": "Welcome! Que bom ter você aqui 🌙",
+      "advanced": "Welcome aboard! Let's shoot for the moon 🌙"
+    }
+  },
+  "switchers": {
+    "language": "Idioma",
+    "theme": "Tema",
+    "languages": {
+      "pt-BR": "Português",
+      "en": "English"
+    },
+    "themes": {
+      "system": "Automático",
+      "light": "Claro",
+      "dark": "Modo noite"
+    }
+  }
+}

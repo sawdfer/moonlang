@@ -4,8 +4,9 @@ import auth from "./auth.json";
 import billing from "./billing.json";
 import classes from "./classes.json";
 import common from "./common.json";
+import experience from "./experience.json";
 import notifications from "./notifications.json";
 
-const messages = { ...common, ...auth, ...classes, ...billing, ...notifications };
+const messages = { ...common, ...auth, ...classes, ...billing, ...notifications, ...experience };
 
 export default messages;
