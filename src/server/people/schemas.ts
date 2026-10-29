@@ -1,4 +1,4 @@
-// Input validation for F-001 forms. Error messages are keys under `auth.errors`.
+// Input validation for F-001 and F-002 forms. Error messages are keys under `auth.errors`.
 import { z } from "zod";
 import { normalizePhone } from "@/server/auth/phone";
 
@@ -63,6 +63,72 @@ export const createStaffSchema = z.object({
   email,
   phoneNumber: z.union([z.literal("").transform(() => null), phone]),
   role: z.enum(["admin", "teacher"]),
+});
+
+const cefr = z.union([
+  z.literal("").transform(() => null),
+  z.enum(["A1", "A2", "B1", "B2", "C1", "C2"]),
+]);
+const optionalId = z.string().trim().transform((value) => (value === "" ? null : value));
+
+/**
+ * Manual registration by staff (F-002). New people get a trial or student
+ * account; the current students ("existing") are enrolled right away, without
+ * the trial or the prorated first charge. Age (RN-019) is checked separately.
+ */
+export const registerStudentSchema = z
+  .object({
+    kind: z.enum(["trial", "student", "existing"]),
+    name,
+    email,
+    phoneNumber: phone,
+    birthDate: isoDate,
+    goal: optionalText(500),
+    cefrLevel: cefr,
+    classGroupId: optionalId,
+    planId: optionalId,
+    dueDay: z.union([z.literal("").transform(() => null), z.coerce.number().int().min(1).max(28)]),
+  })
+  .superRefine((v, ctx) => {
+    if (v.kind !== "existing") return;
+    for (const key of ["classGroupId", "planId", "dueDay"] as const) {
+      if (v[key] === null) ctx.addIssue({ code: "custom", message: "required", path: [key] });
+    }
+  });
+
+/** Staff editing a student (F-002): data, level and private notes. */
+export const staffUpdateStudentSchema = z.object({
+  name,
+  email,
+  phoneNumber: phone,
+  birthDate: isoDate,
+  goal: optionalText(500),
+  cefrLevel: cefr,
+  privateNotes: optionalText(5000),
+});
+
+/** Re-engagement attempt with an inactive student (F-002). */
+export const contactAttemptSchema = z.object({
+  channel: z.enum(["whatsapp", "email", "phone_call"]),
+  outcome: optionalText(200),
+  note: optionalText(1000),
+});
+
+/** The student's own data (F-002, RN-023). Changing the e-mail asks for the password. */
+export const ownProfileSchema = z.object({
+  name,
+  email,
+  phoneNumber: phone,
+  goal: optionalText(500),
+  currentPassword: z.string().max(PASSWORD_MAX).optional().default(""),
+});
+
+export const dueDaySchema = z.object({ dueDay: z.coerce.number().int().min(1).max(28) });
+
+/** RN-021, RN-023: removal needs an explicit confirmation and a reason for the audit log. */
+export const removeStudentSchema = z.object({
+  reason: z.string().trim().min(3, "reasonRequired").max(500, "tooLong"),
+  confirm: z.literal("on", "confirmRequired"),
 });
 
 /** First error message per field, for forms. */

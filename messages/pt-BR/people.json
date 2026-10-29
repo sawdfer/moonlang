@@ -1,0 +1,183 @@
+{
+  "people": {
+    "status": {
+      "trial": "Experimental",
+      "active": "Ativo",
+      "blocked": "Bloqueado",
+      "dropped": "Desistente",
+      "inactive": "Inativo"
+    },
+    "list": {
+      "title": "Alunos",
+      "register": "Cadastrar aluno",
+      "filtersLabel": "Filtrar alunos",
+      "filters": {
+        "all": "Todos",
+        "trial": "Experimentais",
+        "active": "Ativos",
+        "inactive": "Inativos",
+        "blocked": "Bloqueados",
+        "dropped": "Desistentes"
+      },
+      "groupLabel": "Turma",
+      "allGroups": "Todas as turmas",
+      "apply": "Filtrar",
+      "empty": "Nenhum aluno por aqui.",
+      "noGroup": "Sem turma",
+      "lastAccess": "último acesso em {date}",
+      "neverAccessed": "ainda não acessou",
+      "retentionDue": "decidir conta"
+    },
+    "register": {
+      "title": "Cadastrar aluno",
+      "back": "Alunos",
+      "kindLabel": "Quem é?",
+      "kind": {
+        "student": "Aluno novo",
+        "trial": "Aula experimental",
+        "existing": "Aluno atual"
+      },
+      "kindHint": {
+        "student": "Conta de aluno; você coloca na turma e inicia o plano depois.",
+        "trial": "Acesso só à página de aulas, até contratar um plano.",
+        "existing": "Já tem aulas comigo: entra direto na turma, sem experimental e sem cobrança proporcional."
+      },
+      "name": "Nome completo",
+      "email": "E-mail",
+      "phone": "Celular",
+      "birthDate": "Data de nascimento",
+      "cefrLevel": "Nível CEFR",
+      "noLevel": "Ainda não definido",
+      "goal": "Objetivo (opcional)",
+      "placementTitle": "Turma e plano",
+      "noGroups": "Crie uma turma antes de cadastrar um aluno atual.",
+      "group": "Turma",
+      "plan": "Plano",
+      "dueDay": "Dia de vencimento",
+      "dueDayHint": "A primeira mensalidade vence no próximo dia escolhido.",
+      "emailHint": "A pessoa recebe um e-mail para criar a senha (o link vale por 24 horas) e aceita o termo no primeiro acesso.",
+      "submit": "Cadastrar"
+    },
+    "profile": {
+      "back": "Alunos",
+      "lastAccess": "Último acesso em {date}",
+      "neverAccessed": "Ainda não acessou a plataforma",
+      "registered": "Aluno cadastrado! Enviamos o e-mail para criar a senha.",
+      "dataTitle": "Dados",
+      "name": "Nome completo",
+      "email": "E-mail",
+      "phone": "Celular",
+      "birthDate": "Data de nascimento",
+      "cefrLevel": "Nível CEFR",
+      "noLevel": "Ainda não definido",
+      "goal": "Objetivo",
+      "privateNotes": "Observações",
+      "privateNotesHint": "Só a equipe vê. O aluno nunca vê estas observações.",
+      "save": "Salvar",
+      "saved": "Salvo! ✅",
+      "groupsTitle": "Turmas e plano",
+      "since": "desde {date}",
+      "enrollmentStatus": {
+        "active": "ativo",
+        "blocked": "bloqueado",
+        "dropped": "desistiu"
+      },
+      "dueDay": "Vencimento todo dia {day}",
+      "dueDayNotSet": "Dia de vencimento ainda não definido (o plano não começou).",
+      "dueDayChanged": "última troca em {date}",
+      "dueDayOverride": "Trocar o dia (administrador)",
+      "upcomingTitle": "Próximas aulas",
+      "historyTitle": "Histórico de aulas",
+      "creditsTitle": "Créditos",
+      "chargesTitle": "Mensalidades",
+      "openFinance": "Abrir o financeiro",
+      "none": "Nada por aqui.",
+      "expires": "vence em {date}",
+      "lessonKind": {
+        "weekly": "Aula da turma",
+        "extra": "Aula extra",
+        "one_off": "Aula avulsa",
+        "trial": "Aula experimental",
+        "makeup": "Reposição"
+      },
+      "lessonStatus": {
+        "pending": "aguardando aprovação",
+        "confirmed": "confirmada",
+        "rejected": "recusada",
+        "done": "realizada",
+        "cancelled_by_student": "cancelada pelo aluno",
+        "cancelled_by_teacher": "cancelada pela professora"
+      },
+      "attendance": {
+        "expected": "sem registro",
+        "present": "presente",
+        "absent": "falta",
+        "late_absent": "falta por atraso",
+        "cancelled_in_time": "cancelou no prazo",
+        "cancelled_late": "cancelou fora do prazo"
+      },
+      "creditKind": {
+        "reschedule": "Crédito de remarcação",
+        "lesson": "Crédito de aula"
+      },
+      "chargeKind": {
+        "first_prorated": "Primeira cobrança",
+        "monthly": "Mensalidade",
+        "extra_lesson": "Aula extra"
+      },
+      "chargeStatus": {
+        "pending": "em aberto",
+        "paid": "paga",
+        "overdue": "atrasada",
+        "cancelled": "anulada"
+      },
+      "contactTitle": "Tentativas de contato",
+      "contactHint": "Registre cada tentativa de reativar o aluno. Pelo WhatsApp, a mensagem já fica pronta.",
+      "channel": "Canal",
+      "channels": {
+        "whatsapp": "WhatsApp",
+        "email": "E-mail",
+        "phone_call": "Ligação"
+      },
+      "outcome": "Resultado (opcional)",
+      "note": "Observação (opcional)",
+      "recordAttempt": "Registrar tentativa",
+      "openWhatsApp": "Abrir mensagem no WhatsApp",
+      "by": "por {name}",
+      "accountTitle": "Conta",
+      "retentionDue": "Esta conta completou o prazo de inatividade. Decida: manter ou remover.",
+      "retentionAt": "Se continuar inativa, você decide sobre esta conta em {date}.",
+      "keep": "Manter a conta (novo aviso em 6 meses)",
+      "removeTitle": "Remover a conta",
+      "removeHint": "Apaga os dados pessoais do aluno, o perfil, as notificações e os créditos. Os números de aulas e de faturamento continuam, sem dados pessoais. Não dá para desfazer.",
+      "removeReason": "Motivo",
+      "removeConfirm": "Entendo que os dados serão apagados e que isso não pode ser desfeito.",
+      "remove": "Remover a conta"
+    },
+    "self": {
+      "title": "Meu perfil",
+      "name": "Nome completo",
+      "email": "E-mail",
+      "currentPassword": "Sua senha (para trocar o e-mail)",
+      "phone": "Celular",
+      "goal": "Seu objetivo com o inglês",
+      "save": "Salvar",
+      "saved": "Salvo! ✅",
+      "dueDayTitle": "Dia de vencimento",
+      "dueDayCurrent": "Suas mensalidades vencem todo dia {day}.",
+      "dueDayLabel": "Novo dia",
+      "changeDueDay": "Trocar",
+      "dueDayFrom": "Você pode trocar o dia de novo a partir de {date}.",
+      "privacy": "Quer apagar sua conta? Fale com a professora: o administrador confirma e os dados são removidos.",
+      "security": "Senha e segurança",
+      "terms": "Termos e privacidade"
+    },
+    "messages": {
+      "reengagement": "Hi, {name}! 👋 Senti sua falta por aqui. Bora voltar para as aulas de inglês? Me conta como você está!",
+      "inactiveTitle": "Aluno inativo",
+      "inactiveBody": "{name} está há 30 dias sem acessar a plataforma.",
+      "retentionTitle": "Conta inativa: decisão pendente",
+      "retentionBody": "A conta de {name} completou o prazo de inatividade. Decida se mantém ou remove."
+    }
+  }
+}

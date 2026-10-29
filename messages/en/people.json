@@ -1,0 +1,183 @@
+{
+  "people": {
+    "status": {
+      "trial": "Trial",
+      "active": "Active",
+      "blocked": "Blocked",
+      "dropped": "Dropped out",
+      "inactive": "Inactive"
+    },
+    "list": {
+      "title": "Students",
+      "register": "Register student",
+      "filtersLabel": "Filter students",
+      "filters": {
+        "all": "All",
+        "trial": "Trial",
+        "active": "Active",
+        "inactive": "Inactive",
+        "blocked": "Blocked",
+        "dropped": "Dropped out"
+      },
+      "groupLabel": "Class group",
+      "allGroups": "All class groups",
+      "apply": "Filter",
+      "empty": "No students here.",
+      "noGroup": "No class group",
+      "lastAccess": "last access on {date}",
+      "neverAccessed": "never signed in",
+      "retentionDue": "decision due"
+    },
+    "register": {
+      "title": "Register student",
+      "back": "Students",
+      "kindLabel": "Who is it?",
+      "kind": {
+        "student": "New student",
+        "trial": "Trial lesson",
+        "existing": "Current student"
+      },
+      "kindHint": {
+        "student": "Student account; you place them in a class group and start the plan later.",
+        "trial": "Access only to the lessons page, until they sign up for a plan.",
+        "existing": "Already has lessons with me: joins the class group directly, with no trial and no prorated charge."
+      },
+      "name": "Full name",
+      "email": "E-mail",
+      "phone": "Mobile phone",
+      "birthDate": "Birth date",
+      "cefrLevel": "CEFR level",
+      "noLevel": "Not set yet",
+      "goal": "Goal (optional)",
+      "placementTitle": "Class group and plan",
+      "noGroups": "Create a class group before registering a current student.",
+      "group": "Class group",
+      "plan": "Plan",
+      "dueDay": "Due day",
+      "dueDayHint": "The first monthly fee is due on the next chosen day.",
+      "emailHint": "They get an e-mail to create a password (the link is valid for 24 hours) and accept the term on first access.",
+      "submit": "Register"
+    },
+    "profile": {
+      "back": "Students",
+      "lastAccess": "Last access on {date}",
+      "neverAccessed": "Never signed in yet",
+      "registered": "Student registered! We sent the e-mail to create the password.",
+      "dataTitle": "Details",
+      "name": "Full name",
+      "email": "E-mail",
+      "phone": "Mobile phone",
+      "birthDate": "Birth date",
+      "cefrLevel": "CEFR level",
+      "noLevel": "Not set yet",
+      "goal": "Goal",
+      "privateNotes": "Notes",
+      "privateNotesHint": "Staff only. The student never sees these notes.",
+      "save": "Save",
+      "saved": "Saved! ✅",
+      "groupsTitle": "Class groups and plan",
+      "since": "since {date}",
+      "enrollmentStatus": {
+        "active": "active",
+        "blocked": "blocked",
+        "dropped": "dropped out"
+      },
+      "dueDay": "Due every month on day {day}",
+      "dueDayNotSet": "Due day not set yet (the plan hasn't started).",
+      "dueDayChanged": "last changed on {date}",
+      "dueDayOverride": "Change the day (administrator)",
+      "upcomingTitle": "Upcoming lessons",
+      "historyTitle": "Lesson history",
+      "creditsTitle": "Credits",
+      "chargesTitle": "Monthly fees",
+      "openFinance": "Open finance",
+      "none": "Nothing here.",
+      "expires": "expires on {date}",
+      "lessonKind": {
+        "weekly": "Group lesson",
+        "extra": "Extra lesson",
+        "one_off": "One-off lesson",
+        "trial": "Trial lesson",
+        "makeup": "Make-up lesson"
+      },
+      "lessonStatus": {
+        "pending": "awaiting approval",
+        "confirmed": "confirmed",
+        "rejected": "rejected",
+        "done": "done",
+        "cancelled_by_student": "cancelled by the student",
+        "cancelled_by_teacher": "cancelled by the teacher"
+      },
+      "attendance": {
+        "expected": "not recorded",
+        "present": "present",
+        "absent": "absent",
+        "late_absent": "absent (late)",
+        "cancelled_in_time": "cancelled in time",
+        "cancelled_late": "cancelled late"
+      },
+      "creditKind": {
+        "reschedule": "Reschedule credit",
+        "lesson": "Lesson credit"
+      },
+      "chargeKind": {
+        "first_prorated": "First charge",
+        "monthly": "Monthly fee",
+        "extra_lesson": "Extra lesson"
+      },
+      "chargeStatus": {
+        "pending": "open",
+        "paid": "paid",
+        "overdue": "overdue",
+        "cancelled": "cancelled"
+      },
+      "contactTitle": "Contact attempts",
+      "contactHint": "Record each attempt to bring the student back. On WhatsApp, the message is ready to send.",
+      "channel": "Channel",
+      "channels": {
+        "whatsapp": "WhatsApp",
+        "email": "E-mail",
+        "phone_call": "Phone call"
+      },
+      "outcome": "Outcome (optional)",
+      "note": "Note (optional)",
+      "recordAttempt": "Record attempt",
+      "openWhatsApp": "Open message on WhatsApp",
+      "by": "by {name}",
+      "accountTitle": "Account",
+      "retentionDue": "This account reached the inactivity period. Decide: keep or remove.",
+      "retentionAt": "If it stays inactive, you will decide about this account on {date}.",
+      "keep": "Keep the account (new notice in 6 months)",
+      "removeTitle": "Remove the account",
+      "removeHint": "Deletes the student's personal data, profile, notifications and credits. Lesson and billing numbers stay, without personal data. This cannot be undone.",
+      "removeReason": "Reason",
+      "removeConfirm": "I understand the data will be deleted and this cannot be undone.",
+      "remove": "Remove the account"
+    },
+    "self": {
+      "title": "My profile",
+      "name": "Full name",
+      "email": "E-mail",
+      "currentPassword": "Your password (to change the e-mail)",
+      "phone": "Mobile phone",
+      "goal": "Your goal with English",
+      "save": "Save",
+      "saved": "Saved! ✅",
+      "dueDayTitle": "Due day",
+      "dueDayCurrent": "Your monthly fees are due on day {day}.",
+      "dueDayLabel": "New day",
+      "changeDueDay": "Change",
+      "dueDayFrom": "You can change the day again from {date}.",
+      "privacy": "Want to delete your account? Talk to the teacher: the administrator confirms and the data is removed.",
+      "security": "Password and security",
+      "terms": "Terms and privacy"
+    },
+    "messages": {
+      "reengagement": "Hi, {name}! 👋 I've missed you here. Shall we get back to your English lessons? Tell me how you're doing!",
+      "inactiveTitle": "Inactive student",
+      "inactiveBody": "{name} hasn't accessed the platform for 30 days.",
+      "retentionTitle": "Inactive account: decision pending",
+      "retentionBody": "{name}'s account reached the inactivity period. Decide whether to keep or remove it."
+    }
+  }
+}

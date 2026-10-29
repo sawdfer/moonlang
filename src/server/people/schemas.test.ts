@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { acceptInviteSchema, createInviteSchema, createStaffSchema, fieldErrors } from "./schemas";
+import {
+  acceptInviteSchema,
+  contactAttemptSchema,
+  createInviteSchema,
+  createStaffSchema,
+  fieldErrors,
+  ownProfileSchema,
+  registerStudentSchema,
+  removeStudentSchema,
+} from "./schemas";
 
 const valid = {
   name: "Ana Souza",
@@ -68,5 +77,57 @@ describe("createStaffSchema", () => {
     const base = { name: "Luana", email: "luana@example.com", phoneNumber: "" };
     expect(createStaffSchema.safeParse({ ...base, role: "teacher" }).success).toBe(true);
     expect(createStaffSchema.safeParse({ ...base, role: "root" }).success).toBe(false);
+  });
+});
+
+describe("F-002 schemas", () => {
+  const person = {
+    name: "Bruno Lima",
+    email: "bruno@example.com",
+    phoneNumber: "11 98765-4321",
+    birthDate: "1990-01-15",
+    goal: "",
+    cefrLevel: "B1",
+  };
+
+  it("F-002: a current student needs class group, plan and due day", () => {
+    const base = { ...person, kind: "existing", classGroupId: "", planId: "", dueDay: "" };
+    expect(errorsOf(registerStudentSchema.safeParse(base))).toMatchObject({
+      classGroupId: "required",
+      planId: "required",
+      dueDay: "required",
+    });
+    expect(
+      registerStudentSchema.parse({ ...base, classGroupId: "g1", planId: "p1", dueDay: "10" }),
+    ).toMatchObject({ kind: "existing", dueDay: 10, cefrLevel: "B1" });
+  });
+
+  it("F-002: new students and trial people need no placement", () => {
+    const parsed = registerStudentSchema.parse({ ...person, kind: "trial", classGroupId: "", planId: "", dueDay: "" });
+    expect(parsed).toMatchObject({ classGroupId: null, planId: null, dueDay: null, goal: null });
+  });
+
+  it("RN-019: birth date is mandatory in manual registration", () => {
+    const parsed = registerStudentSchema.safeParse({ ...person, birthDate: "", kind: "student", classGroupId: "", planId: "", dueDay: "" });
+    expect(errorsOf(parsed)).toMatchObject({ birthDate: "birthDate" });
+  });
+
+  it("RN-021, RN-023: removing an account needs a reason and an explicit confirmation", () => {
+    expect(errorsOf(removeStudentSchema.safeParse({ reason: "", confirm: undefined }))).toMatchObject({
+      reason: "reasonRequired",
+      confirm: "confirmRequired",
+    });
+    expect(removeStudentSchema.safeParse({ reason: "Pediu exclusão", confirm: "on" }).success).toBe(true);
+  });
+
+  it("F-002: contact attempts use the known channels", () => {
+    expect(contactAttemptSchema.safeParse({ channel: "whatsapp", outcome: "", note: "" }).success).toBe(true);
+    expect(contactAttemptSchema.safeParse({ channel: "pigeon", outcome: "", note: "" }).success).toBe(false);
+  });
+
+  it("F-002: a student's own profile never accepts private notes or a role", () => {
+    const parsed = ownProfileSchema.parse({ ...person, privateNotes: "x", role: "admin" });
+    expect(parsed).not.toHaveProperty("privateNotes");
+    expect(parsed).not.toHaveProperty("role");
   });
 });

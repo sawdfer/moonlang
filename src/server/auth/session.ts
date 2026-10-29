@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { db } from "@/db";
+import { touchLastAccess } from "@/server/people/self";
 import { latestConsentVersion } from "@/server/people/store";
 import { needsConsent } from "@/server/people/rules";
 import { TERMS_VERSION } from "@/server/people/terms";
@@ -36,6 +37,11 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
 });
 
 /** RN-023: whether the user still has to accept the current terms. */
+/** RN-021: records the access of students (at most one write per hour, once per request). */
+const recordAccess = cache(async (userId: string, role: Role) => {
+  if (role === "student" || role === "trial") await touchLastAccess(userId);
+});
+
 export const hasPendingConsent = cache(async (userId: string, role: Role): Promise<boolean> => {
   if (!needsConsent(role, null, TERMS_VERSION)) return false;
   return needsConsent(role, await latestConsentVersion(db, userId), TERMS_VERSION);
@@ -65,6 +71,7 @@ export async function requireUser(
     twoFactorEnabled: user.twoFactorEnabled,
     needsConsent: await hasPendingConsent(user.id, user.role),
   });
+  await recordAccess(user.id, user.role);
   if (gate) redirect(GATE_PATHS[gate]);
   // Wrong role: send the user to their own area instead of exposing the page.
   if (allowed && !allowed.includes(user.role)) redirect(homePathFor(user.role));
