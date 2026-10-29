@@ -15,6 +15,10 @@ export const LESSON_DURATIONS = [60, 120] as const;
 export const MAX_STUDENTS_PER_GROUP = 3;
 /** The teacher waits up to 20 minutes; after that it is an absence (RN-010). */
 export const LATE_TOLERANCE_MINUTES = 20;
+/** "Entrar na aula" opens 15 minutes before the start (RN-008, V1). */
+export const JOIN_OPENS_MINUTES_BEFORE = 15;
+/** One trial lesson per person every 3 months (RN-018). */
+export const TRIAL_INTERVAL_MONTHS = 3;
 /** How far ahead weekly lessons are materialized. */
 export const MATERIALIZE_HORIZON_DAYS = 56;
 
@@ -53,6 +57,13 @@ export function zonedDateTime(date: string, time: string): Date {
 export function addDaysToDate(date: string, days: number): string {
   const [y, m, d] = parseDate(date);
   return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+}
+
+/** Adds calendar months, clamping to the last day of a shorter month (31/01 + 1 → 28/02). */
+export function addMonthsToDate(date: string, months: number): string {
+  const [y, m, d] = parseDate(date);
+  const lastDay = new Date(Date.UTC(y, m - 1 + months + 1, 0)).getUTCDate();
+  return new Date(Date.UTC(y, m - 1 + months, Math.min(d, lastDay))).toISOString().slice(0, 10);
 }
 
 /** 0 = Sunday … 6 = Saturday. */
@@ -147,6 +158,42 @@ export function isBlocked(startsAt: Date, blocks: readonly DateRange[]): boolean
 /** Arriving more than 20 minutes late counts as an absence (RN-008, RN-010). */
 export function attendanceForArrival(minutesLate: number): "present" | "late_absent" {
   return minutesLate > LATE_TOLERANCE_MINUTES ? "late_absent" : "present";
+}
+
+/** "Entrar na aula" works from 15 minutes before the start until the end (RN-008, V1). */
+export function isJoinWindowOpen(slot: TimeSlot, now: Date): boolean {
+  const opensAt = addMinutes(slot.startsAt, -JOIN_OPENS_MINUTES_BEFORE);
+  return now >= opensAt && now < lessonEndsAt(slot);
+}
+
+/**
+ * Attendance recorded when the student taps "Entrar na aula" (V1): present,
+ * or an absence when more than 20 minutes late (RN-010).
+ */
+export function attendanceOnJoin(slot: TimeSlot, now: Date): "present" | "late_absent" {
+  const minutesLate = Math.max(0, Math.floor((now.getTime() - slot.startsAt.getTime()) / 60_000));
+  return attendanceForArrival(minutesLate);
+}
+
+/**
+ * A lesson recording is only for students who joined that lesson, or whom the
+ * teacher released, whatever class group they are in now (RN-028, V4).
+ */
+export function canWatchRecording(input: {
+  attendance: "expected" | "present" | "absent" | "late_absent" | "cancelled_in_time" | "cancelled_late" | null;
+  released: boolean;
+}): boolean {
+  return input.released || input.attendance === "present";
+}
+
+/**
+ * First date a person may take another trial lesson, given the dates of their
+ * previous trial lessons (RN-018: one every 3 months). `null` when there is none.
+ */
+export function nextTrialAllowedOn(previousTrialDates: readonly string[]): string | null {
+  if (previousTrialDates.length === 0) return null;
+  const last = [...previousTrialDates].sort().at(-1)!;
+  return addMonthsToDate(last, TRIAL_INTERVAL_MONTHS);
 }
 
 /** A confirmed lesson becomes "done" once it ends (F-004). */

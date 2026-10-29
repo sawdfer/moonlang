@@ -11,9 +11,16 @@ import { JoinArea } from "../_components/join-area";
 
 // Target of lesson reminders (F-008). Only lessons of the signed-in student are found,
 // so a guessed id never reveals another student's lesson or meeting link (RN-024).
-export default async function StudentLessonPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function StudentLessonPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ join?: string }>;
+}) {
   const user = await requireUser(["student", "trial"]);
   const { id } = await params;
+  const { join } = await searchParams;
   const now = new Date();
   await syncSchedule(db, now);
 
@@ -38,6 +45,11 @@ export default async function StudentLessonPage({ params }: { params: Promise<{ 
           {format.dateTimeRange(lesson.startsAt, lessonEndsAt(lesson), { hour: "2-digit", minute: "2-digit" })}
         </p>
         {lesson.status === "pending" && <p className="mt-2 text-sm text-muted-foreground">{t("pending")}</p>}
+        {join && ["closed", "noLink", "notFound"].includes(join) && (
+          <p role="alert" className="mt-2 text-sm text-destructive">
+            {t(`joinError.${join}`)}
+          </p>
+        )}
         {lesson.status.startsWith("cancelled") ? (
           <p className="mt-3 text-sm text-destructive">{t("cancelled")}</p>
         ) : (

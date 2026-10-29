@@ -48,7 +48,7 @@ export async function createClassGroupAction(_state: FormState, formData: FormDa
 }
 
 export async function updateClassGroupAction(_state: FormState, formData: FormData): Promise<FormState> {
-  await requireStaff();
+  const staff = await requireStaff();
   const parsed = parseForm(classGroupSchema.extend({ id: idField }), formData);
   if (parsed.error !== undefined) return { error: parsed.error };
   const { force, id, ...input } = parsed.data;
@@ -76,12 +76,26 @@ export async function updateClassGroupAction(_state: FormState, formData: FormDa
 
   try {
     const result = await updateClassGroup(db, { ...input, id, now });
+    if (result.planChanged) {
+      await recordAudit({
+        actorId: staff.id,
+        action: "class_group.change_duration",
+        entityType: "class_group",
+        entityId: id,
+        data: { from: group.durationMinutes, to: input.durationMinutes, students: result.studentIds },
+      });
+    }
     if (result.scheduleChanged) {
       const t = await getTranslations("classes.notifications");
       await notifyStudents(result.studentIds, {
         type: "class_schedule_changed",
         title: t("scheduleChangedTitle"),
-        body: t("scheduleChangedBody", { name: input.name }),
+        body: [
+          t("scheduleChangedBody", { name: input.name }),
+          result.planChanged ? t("planChangedBody", { hours: input.durationMinutes / 60 }) : "",
+        ]
+          .filter(Boolean)
+          .join(" "),
       });
     }
   } catch (error) {

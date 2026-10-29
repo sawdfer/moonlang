@@ -45,6 +45,18 @@ export default async function ScheduleBlocksPage({
 
       <Card>
         <ActionForm action={createScheduleBlockAction} submitLabel={t("create")} confirmText={t("confirm")}>
+          <fieldset className="flex flex-col gap-2">
+            <legend className="mb-1 text-sm font-medium">{t("kind")}</legend>
+            {(["holiday", "vacation"] as const).map((kind) => (
+              <label key={kind} className="flex items-start gap-2 text-sm">
+                <input type="radio" name="kind" value={kind} defaultChecked={kind === "holiday"} className="mt-1" />
+                <span>
+                  <span className="font-medium">{t(`kinds.${kind}`)}</span>
+                  <span className="block text-muted-foreground">{t(`kindHints.${kind}`)}</span>
+                </span>
+              </label>
+            ))}
+          </fieldset>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label={t("startsOn")} htmlFor="startsOn">
               <Input id="startsOn" name="startsOn" type="date" min={today} required />
@@ -71,7 +83,10 @@ export default async function ScheduleBlocksPage({
                 year: "numeric",
               })}
             </p>
-            {block.reason && <p className="text-sm text-muted-foreground">{block.reason}</p>}
+            <p className="text-sm text-muted-foreground">
+              {t(`kinds.${block.kind}`)}
+              {block.reason && ` · ${block.reason}`}
+            </p>
             {block.endsOn < today && <p className="text-xs text-muted-foreground">{t("past")}</p>}
           </li>
         ))}

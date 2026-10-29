@@ -10,6 +10,7 @@ import {
   listUpcomingLessonsForStudent,
   type StudentLesson,
 } from "@/server/classes/student";
+import { LockedTeasers } from "../_components/locked-teaser";
 import { JoinArea } from "./_components/join-area";
 
 export async function generateMetadata() {
@@ -125,6 +126,8 @@ export default async function StudentHomePage() {
           </div>
         </section>
       )}
+
+      {viewer.role === "trial" && <LockedTeasers />}
     </main>
   );
 }

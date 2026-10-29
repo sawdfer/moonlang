@@ -9,10 +9,11 @@ import { WEEKDAYS, weekdayName } from "./weekday";
 /** Inputs of the class group form (F-003). */
 export async function ClassGroupFields({
   defaults,
-  durationLocked = false,
+  hasStudents = false,
 }: {
   defaults: ClassGroupInput;
-  durationLocked?: boolean;
+  /** Changing the duration then moves the students to another plan (V4). */
+  hasStudents?: boolean;
 }) {
   const t = await getTranslations("classes");
   return (
@@ -44,15 +45,9 @@ export async function ClassGroupFields({
       <Field
         label={t("fields.duration")}
         htmlFor="durationMinutes"
-        hint={durationLocked ? t("fields.durationLocked") : undefined}
+        hint={hasStudents ? t("fields.durationChangesPlan") : undefined}
       >
-        {durationLocked && <input type="hidden" name="durationMinutes" value={defaults.durationMinutes} />}
-        <Select
-          id="durationMinutes"
-          name={durationLocked ? undefined : "durationMinutes"}
-          defaultValue={String(defaults.durationMinutes)}
-          disabled={durationLocked}
-        >
+        <Select id="durationMinutes" name="durationMinutes" defaultValue={String(defaults.durationMinutes)}>
           {LESSON_DURATIONS.map((minutes) => (
             <option key={minutes} value={minutes}>
               {t("durations", { hours: minutes / 60 })}

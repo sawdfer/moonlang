@@ -36,7 +36,6 @@
       "cefrLevel": "Nível",
       "noLevel": "Sem nível definido",
       "duration": "Duração",
-      "durationLocked": "Para mudar a duração, tire os alunos primeiro: o plano deles segue a duração da turma.",
       "weekday": "Dia da semana",
       "startTime": "Horário",
       "startsOn": "Data de início",
@@ -44,7 +43,8 @@
       "meetingUrlHint": "Google Meet ou Zoom. Só aparece para os alunos dentro da plataforma.",
       "student": "Aluno",
       "plan": "Plano",
-      "startedOn": "Entra em"
+      "startedOn": "Entra em",
+      "durationChangesPlan": "Mudar a duração passa os alunos para o plano da nova duração, com o novo valor a partir do próximo ciclo."
     },
     "nav": {
       "home": "Início",
@@ -72,11 +72,12 @@
       "notOpen": "Essa aula foi cancelada.",
       "notStarted": "A presença só pode ser marcada depois que a aula começa.",
       "notParticipant": "Esse aluno não está nessa aula.",
-      "durationLocked": "Para mudar a duração, tire os alunos primeiro.",
       "notAStudent": "Só dá para adicionar contas de aluno.",
       "planMismatch": "O plano precisa ter a mesma duração da turma.",
       "groupFull": "A turma já tem 3 alunos.",
-      "alreadyEnrolled": "Esse aluno já está na turma."
+      "alreadyEnrolled": "Esse aluno já está na turma.",
+      "noPlanForDuration": "Não existe plano ativo com essa duração.",
+      "notATrial": "Essa pessoa não tem uma conta experimental."
     },
     "success": {
       "saved": "Salvo! ✨",
@@ -98,8 +99,14 @@
       "lessonScheduledBody": "Aula da turma {name} em {when}.",
       "cancelledTitle": "{count, plural, one {Aula cancelada} other {Aulas canceladas}}",
       "cancelledBody": "A Luana cancelou: {dates}.",
-      "creditsGranted": "Você ganhou {count, plural, one {1 crédito de aula} other {# créditos de aula}}, válidos por 30 dias."
-    }
+      "creditsGranted": "Você ganhou {count, plural, one {1 crédito de aula} other {# créditos de aula}}, válidos até {date}.",
+      "planChangedBody": "Sua aula agora tem {hours}h e o seu plano muda junto, com o novo valor a partir do próximo ciclo.",
+      "vacationTitle": "Férias da Luana 🏖️",
+      "vacationCreditsExpire": "Atenção: {count, plural, one {seu crédito em aberto vence} other {seus # créditos em aberto vencem}} em {date}, quando começam as férias. Use antes!",
+      "trialScheduledTitle": "Sua aula experimental está marcada! 🎉",
+      "trialScheduledBody": "Te esperamos em {when}. É só abrir a plataforma e tocar em \"Entrar na aula\"."
+    },
+    "trialCandidate": "{name} (experimental)"
   },
   "agenda": {
     "title": "Agenda",
@@ -136,7 +143,7 @@
     },
     "backToAgenda": "Voltar para a agenda",
     "attendance": "Presença",
-    "attendanceHint": "Atraso de mais de {minutes} minutos conta como falta. Sem marcação, o aluno fica como presente quando a aula termina.",
+    "attendanceHint": "A presença é registrada quando o aluno toca em \"Entrar na aula\". Mais de {minutes} minutos de atraso conta como falta, e quem não entrar fica com falta quando a aula termina. Você pode corrigir aqui.",
     "attendanceLater": "A presença pode ser marcada quando a aula começar.",
     "noParticipants": "Nenhum aluno nesta aula.",
     "attendanceStatus": {
@@ -165,7 +172,7 @@
     "cancelConfirm": "Cancelar esta aula? Os alunos serão avisados.",
     "blocks": {
       "title": "Bloqueios de agenda",
-      "hint": "Férias, feriados e dias de folga. As aulas semanais nesses dias são canceladas e cada aluno ganha 1 crédito de aula, válido por 30 dias.",
+      "hint": "Férias, feriados e folgas. As aulas semanais nesses dias são canceladas e cada aluno ganha 1 crédito de aula.",
       "created": "Bloqueio criado. {count, plural, =0 {Nenhuma aula foi afetada.} one {1 aula foi cancelada e os alunos foram avisados.} other {# aulas foram canceladas e os alunos foram avisados.}}",
       "create": "Bloquear dias",
       "confirm": "Bloquear esses dias? As aulas semanais neles serão canceladas, com crédito para os alunos. Não dá para desfazer.",
@@ -175,7 +182,37 @@
       "reasonPlaceholder": "Férias, feriado…",
       "list": "Bloqueios",
       "empty": "Nenhum bloqueio cadastrado.",
-      "past": "Já passou"
+      "past": "Já passou",
+      "kind": "Tipo",
+      "kinds": {
+        "holiday": "Feriado ou folga",
+        "vacation": "Férias"
+      },
+      "kindHints": {
+        "holiday": "Os créditos dos alunos continuam valendo normalmente.",
+        "vacation": "Todos os créditos em aberto vencem no primeiro dia das férias, e os alunos são avisados."
+      }
+    },
+    "trial": {
+      "title": "Marcar experimental",
+      "hint": "Aula experimental gratuita de 1h, que também serve de nivelamento.",
+      "noPeople": "Ninguém com conta experimental ainda.",
+      "invite": "Enviar um convite experimental",
+      "create": "Marcar aula experimental",
+      "person": "Pessoa",
+      "duration": "A experimental dura 1h.",
+      "tooSoon": "Essa pessoa já fez experimental nos últimos 3 meses: a próxima seria a partir de {date}.",
+      "outcomeTitle": "Resultado da experimental",
+      "outcomeHint": "Registre o nível e se a pessoa vai seguir. O nível vai para o perfil dela.",
+      "outcomeLater": "O resultado pode ser registrado depois que a aula começar.",
+      "outcome": "Resultado",
+      "outcomes": {
+        "pending": "Ainda decidindo",
+        "converted": "Vai virar aluno",
+        "not_converted": "Não vai seguir"
+      },
+      "notes": "Observações",
+      "convertHint": "Para fechar, coloque a pessoa numa turma. Ela vira aluno quando o pagamento da primeira cobrança for registrado."
     }
   },
   "studentLessons": {
@@ -198,6 +235,24 @@
     "individual": "Aula individual",
     "blocked": "Acesso às aulas pausado por pendência no financeiro. Fala com a Luana para regularizar.",
     "linkSoon": "O link da aula ainda não foi cadastrado. Ele aparece aqui assim que a Luana colocar.",
-    "join": "Entrar na aula"
+    "join": "Entrar na aula",
+    "joinOpensSoon": "O botão \"Entrar na aula\" aparece 15 minutos antes do início.",
+    "joinError": {
+      "closed": "A entrada abre 15 minutos antes da aula e fecha quando ela termina.",
+      "noLink": "O link da aula ainda não foi cadastrado.",
+      "notFound": "Essa aula não está disponível para você."
+    },
+    "locked": {
+      "title": "Tem mais coisa aqui dentro 👀",
+      "subtitle": "Essas áreas abrem quando você contrata um plano.",
+      "cta": "Isso aqui é só para quem já embarcou no foguete 🚀🌙. Fale com a Luana!",
+      "areas": {
+        "materials": "Materiais",
+        "recordings": "Gravações das aulas",
+        "progress": "Seu progresso",
+        "tasks": "Tarefas",
+        "posts": "Posts da turma"
+      }
+    }
   }
 }

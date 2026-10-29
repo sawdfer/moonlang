@@ -113,7 +113,7 @@ export default async function ClassGroupPage({ params }: { params: Promise<{ id:
                         <Select id="studentId" name="studentId" required>
                           {candidates.map((c) => (
                             <option key={c.id} value={c.id}>
-                              {c.name}
+                              {c.role === "trial" ? t("trialCandidate", { name: c.name }) : c.name}
                             </option>
                           ))}
                         </Select>
@@ -148,7 +148,7 @@ export default async function ClassGroupPage({ params }: { params: Promise<{ id:
               <h2 className="mb-4 font-display text-xl font-semibold">{t("edit")}</h2>
               <ActionForm action={updateClassGroupAction} submitLabel={t("save")}>
                 <input type="hidden" name="id" value={group.id} />
-                <ClassGroupFields defaults={group} durationLocked={students.length > 0} />
+                <ClassGroupFields defaults={group} hasStudents={students.length > 0} />
               </ActionForm>
             </Card>
           )}
