@@ -1,0 +1,125 @@
+{
+  "notifications": {
+    "center": {
+      "title": "Notifications",
+      "open": "Open notifications",
+      "unread": "{count} unread",
+      "empty": "All caught up. Even the moon takes a break 🌙",
+      "markAllRead": "Mark all as read",
+      "markRead": "Mark as read",
+      "openLink": "Open",
+      "error": "Couldn't load right now. Try again?"
+    },
+    "whatsapp": {
+      "title": "WhatsApp queue",
+      "subtitle": "Ready-made messages to send from your WhatsApp. Tap \"Send\", confirm in WhatsApp and come back to mark it as done.",
+      "empty": "No messages in the queue. Inbox zero, baby ✨",
+      "send": "Send",
+      "markSent": "Done",
+      "discard": "Discard",
+      "to": "To",
+      "createdAt": "Created {date}",
+      "expiresAt": "Leaves the queue {date}",
+      "source": {
+        "announcement": "Announcement",
+        "lesson_tomorrow": "Lesson reminder",
+        "other": "Notice"
+      }
+    },
+    "announcements": {
+      "title": "Announcements",
+      "subtitle": "Write it once and it reaches the notification center, e-mail and your WhatsApp queue.",
+      "message": "Message",
+      "messagePlaceholder": "E.g. No lesson on the Nov 15 holiday. Enjoy! 🎉",
+      "audience": "Who gets it?",
+      "audienceAll": "All students",
+      "audienceClassGroups": "Class groups",
+      "audienceStudents": "Specific students",
+      "noClassGroups": "No active class groups yet.",
+      "noStudents": "No students yet.",
+      "submit": "Send announcement",
+      "sending": "Sending…",
+      "sent": "Announcement sent to {count, plural, one {# student} other {# students}} ✨",
+      "whatsappQueued": "{count, plural, =0 {No messages went to the WhatsApp queue.} one {# message went to the WhatsApp queue.} other {# messages went to the WhatsApp queue.}}",
+      "openQueue": "Open WhatsApp queue",
+      "recent": "Recently sent",
+      "recentEmpty": "No announcements sent yet.",
+      "recipients": "{count, plural, one {# recipient} other {# recipients}}",
+      "errors": {
+        "empty": "Write the message before sending.",
+        "tooLong": "The message is too long (2,000 characters max).",
+        "noRecipients": "Pick at least one recipient.",
+        "meetingLink": "Announcements can't include a meeting link: it only lives on the lesson page 😉"
+      }
+    },
+    "templates": {
+      "lessonTomorrow": {
+        "title": "Lesson tomorrow! 🌙",
+        "body": "Your lesson is tomorrow, {weekday}, at {time}. Don't forget, see you there 👋",
+        "whatsapp": "Hi, {name}! Quick reminder: you have a lesson tomorrow ({weekday}) at {time} 🌙 Everything is on the lesson page: {url}"
+      },
+      "lessonInOneHour": {
+        "title": "Your lesson starts in 1 hour 🌙",
+        "body": "Today at {time}. Open the lesson in the platform and tap \"Join lesson\". Let's go!"
+      },
+      "announcement": {
+        "title": "Announcement from {author} 📣",
+        "body": "{message}",
+        "whatsapp": "Hi, {name}! 📣 {message}"
+      },
+      "chargeDueSoon": {
+        "title": "Your monthly fee is due in 3 days 💸",
+        "body": "Amount: {amount}. Due date: {date}. Easy peasy!"
+      },
+      "chargeOverdue": {
+        "title": "Your monthly fee is overdue",
+        "body": "The {amount} charge due on {date} is still open. Shall we sort it out?"
+      },
+      "blockWarning": {
+        "title": "Heads up: your access may be blocked",
+        "body": "The {amount} charge is overdue. If it isn't paid by {date}, access to lessons will be blocked."
+      },
+      "priceChange": {
+        "title": "Monthly fee update",
+        "body": "Starting {date}, your monthly fee will be {amount}."
+      },
+      "creditExpiring": {
+        "title": "Your lesson credit expires in 3 days ⏳",
+        "body": "Credits: {count}. Expires: {date}. Let's use it?"
+      },
+      "creditGranted": {
+        "title": "You got a lesson credit 🎁",
+        "body": "Credits: {count}. Use by {date}."
+      },
+      "lessonRequestAccepted": {
+        "title": "Lesson request accepted ✅",
+        "body": "Your lesson on {weekday}, {date}, at {time} is confirmed."
+      },
+      "lessonRequestRejected": {
+        "title": "Lesson request declined",
+        "body": "We couldn't confirm the lesson on {date} at {time}. Want to try another time?"
+      },
+      "lessonCancelledByTeacher": {
+        "title": "Lesson cancelled",
+        "body": "The lesson on {weekday}, {date}, at {time} was cancelled by the teacher."
+      },
+      "lessonRequested": {
+        "title": "New lesson request",
+        "body": "{student} asked for a lesson on {date} at {time}."
+      },
+      "studentCancelled": {
+        "title": "{student} cancelled a lesson",
+        "body": "Lesson on {weekday}, {date}, at {time}."
+      },
+      "newStudent": {
+        "title": "New student! 🎉",
+        "body": "{student} accepted the invite and joined the platform."
+      }
+    },
+    "email": {
+      "greeting": "Hi, {name}!",
+      "cta": "Open in Moonlang",
+      "footer": "Moonlang 🌙 English lessons with Luana"
+    }
+  }
+}
