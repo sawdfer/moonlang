@@ -1,11 +1,19 @@
 import "server-only";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { APIError, createAuthMiddleware, getSessionFromCtx } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
 import { haveIBeenPwned, phoneNumber, twoFactor } from "better-auth/plugins";
 import { db } from "@/db";
 import * as schema from "@/db/schema";
 import { env } from "@/env";
+import { sendMail } from "@/server/notifications/mail";
+import { canDisableTwoFactor } from "./access";
+import { localeOf, mailTranslator } from "./mail-text";
+import type { Role } from "./roles";
+
+/** Marks the reset link sent to a new staff account, so the e-mail reads as a welcome. */
+export const WELCOME_RESET_PATH = "/reset-password?welcome=1";
 
 export const auth = betterAuth({
   appName: "Moonlang",
@@ -26,9 +34,16 @@ export const auth = betterAuth({
     minPasswordLength: 12,
     maxPasswordLength: 128,
     revokeSessionsOnPasswordReset: true,
-    // TODO(F-001): send the reset e-mail through the notifications module.
-    sendResetPassword: async () => {
-      throw new Error("Password reset e-mail is not configured yet.");
+    resetPasswordTokenExpiresIn: 60 * 60,
+    // Password recovery is by e-mail (F-001).
+    sendResetPassword: async ({ user, url }) => {
+      const t = mailTranslator(await localeOf(user.id));
+      const welcome = url.includes(encodeURIComponent(WELCOME_RESET_PATH));
+      await sendMail({
+        to: user.email,
+        subject: t(welcome ? "welcomeSubject" : "resetSubject"),
+        text: t(welcome ? "welcomeBody" : "resetBody", { name: user.name, url }),
+      });
     },
   },
   user: {
@@ -56,6 +71,16 @@ export const auth = betterAuth({
       "/two-factor/verify-totp": { window: 60, max: 5 },
       "/request-password-reset": { window: 300, max: 3 },
     },
+  },
+  hooks: {
+    // F-001: two-factor is mandatory for staff, so they cannot turn it off.
+    before: createAuthMiddleware(async (ctx) => {
+      if (ctx.path !== "/two-factor/disable") return;
+      const session = await getSessionFromCtx(ctx);
+      if (session && !canDisableTwoFactor(session.user.role as Role)) {
+        throw new APIError("FORBIDDEN", { message: "Two-factor is mandatory for staff." });
+      }
+    }),
   },
   advanced: {
     useSecureCookies: env.NODE_ENV === "production",

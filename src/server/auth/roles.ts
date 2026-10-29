@@ -15,8 +15,12 @@ export function isAdmin(role: Role): boolean {
   return (ADMIN_ROLES as readonly Role[]).includes(role);
 }
 
+/** Online lessons page: the only area a trial account can use (RN-018). */
+export const STUDENT_LESSONS_PATH = "/student/lessons";
+
 /** Landing page after login for each role. */
 export function homePathFor(role: Role): string {
   if (isStaff(role)) return "/teacher";
+  if (role === "trial") return STUDENT_LESSONS_PATH;
   return "/student";
 }

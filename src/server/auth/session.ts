@@ -2,6 +2,11 @@ import "server-only";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
+import { db } from "@/db";
+import { latestConsentVersion } from "@/server/people/store";
+import { needsConsent } from "@/server/people/rules";
+import { TERMS_VERSION } from "@/server/people/terms";
+import { accessGate, GATE_PATHS } from "./access";
 import { auth } from "./auth";
 import { ADMIN_ROLES, homePathFor, type Role, STAFF_ROLES } from "./roles";
 
@@ -30,12 +35,37 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   };
 });
 
-/** Requires a signed-in user, optionally with one of the given roles. */
+/** RN-023: whether the user still has to accept the current terms. */
+export const hasPendingConsent = cache(async (userId: string, role: Role): Promise<boolean> => {
+  if (!needsConsent(role, null, TERMS_VERSION)) return false;
+  return needsConsent(role, await latestConsentVersion(db, userId), TERMS_VERSION);
+});
+
+/**
+ * Requires a signed-in user without checking the access gates. Only for the
+ * pages that resolve a gate (two-factor enrollment, consent) and sign-out.
+ */
+export async function requireSignedIn(): Promise<CurrentUser> {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+  return user;
+}
+
+/**
+ * Requires a signed-in user, optionally with one of the given roles.
+ * Staff without two-factor and students with an outdated consent are sent to
+ * the page that fixes it before they can use anything else (F-001, RN-023).
+ */
 export async function requireUser(
   allowed?: readonly Role[],
 ): Promise<CurrentUser> {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login");
+  const user = await requireSignedIn();
+  const gate = accessGate({
+    role: user.role,
+    twoFactorEnabled: user.twoFactorEnabled,
+    needsConsent: await hasPendingConsent(user.id, user.role),
+  });
+  if (gate) redirect(GATE_PATHS[gate]);
   // Wrong role: send the user to their own area instead of exposing the page.
   if (allowed && !allowed.includes(user.role)) redirect(homePathFor(user.role));
   return user;
