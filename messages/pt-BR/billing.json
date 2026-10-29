@@ -1,0 +1,108 @@
+{
+  "billing": {
+    "status": {
+      "pending": "Pendente",
+      "paid": "Paga",
+      "overdue": "Atrasada",
+      "cancelled": "Cancelada"
+    },
+    "kind": {
+      "first_prorated": "Primeira cobrança (proporcional)",
+      "monthly": "Mensalidade",
+      "extra_lesson": "Aula extra"
+    },
+    "enrollmentStatus": {
+      "active": "Ativa",
+      "blocked": "Bloqueada",
+      "dropped": "Desistente"
+    },
+    "period": "{start} a {end}",
+    "teacher": {
+      "title": "Financeiro 💸",
+      "subtitle": "Quem pagou, quem está devendo e o que vem por aí.",
+      "filter": {
+        "open": "Em aberto",
+        "overdue": "Atrasadas",
+        "paid": "Pagas",
+        "all": "Todas"
+      },
+      "charges": "Cobranças",
+      "empty": "Nada por aqui. Tudo em dia! ✨",
+      "due": "Vence em {date}",
+      "paidOn": "Paga em {date}",
+      "received": "Recebido: {amount}",
+      "difference": "Diferença: {amount}",
+      "markPaid": "Marcar como paga",
+      "receivedAmount": "Valor recebido (R$)",
+      "paidDate": "Data do pagamento",
+      "note": "Observação (opcional)",
+      "confirmPaid": "Confirmar pagamento",
+      "cancel": "Cancelar",
+      "undo": "Desfazer",
+      "confirmUndo": "Desfazer mesmo?",
+      "startTitle": "Planos para iniciar",
+      "startHint": "Escolha o dia de vencimento: a plataforma calcula a primeira cobrança proporcional.",
+      "startEmpty": "Nenhuma participação esperando um plano.",
+      "dueDay": "Dia de vencimento",
+      "dueDayLocked": "Mesmo dia das outras mensalidades: {day}",
+      "startDate": "Início do plano",
+      "existingStudent": "Aluno atual: sem cobrança proporcional, a primeira mensalidade vence no próximo dia de vencimento",
+      "startPlan": "Iniciar plano",
+      "enrollmentsTitle": "Participações",
+      "enrollmentsEmpty": "Nenhuma participação ativa.",
+      "dropout": "Registrar desistência",
+      "dropoutReason": "Motivo (opcional)",
+      "confirmDropout": "Confirmar desistência",
+      "monthlyPrice": "{plan} · {price}"
+    },
+    "admin": {
+      "title": "Configurações ⚙️",
+      "subtitle": "Valores usados no financeiro.",
+      "pixKey": "Chave Pix",
+      "pixKeyHint": "Aparece para o aluno junto da cobrança.",
+      "extraHourPrice": "Valor da hora extra (R$)",
+      "dueDayOptions": "Opções de dia de vencimento",
+      "dueDayOptionsHint": "Dias de 1 a 28, separados por vírgula. Ex.: 5, 10, 15, 20",
+      "save": "Salvar",
+      "saved": "Configurações salvas! ✅",
+      "invalid": "Confira os valores e tente de novo."
+    },
+    "student": {
+      "title": "Meu financeiro 💸",
+      "subtitle": "Seus valores, vencimentos e a chave Pix para pagar.",
+      "locked": "Seu financeiro aparece aqui quando você começar um plano. Bora? 🚀",
+      "pixTitle": "Pague com Pix",
+      "pixMissing": "A chave Pix ainda não foi cadastrada. Fale com a Luana.",
+      "copy": "Copiar",
+      "copied": "Copiado!",
+      "payHint": "Depois de pagar no app do seu banco, a Luana confirma por aqui.",
+      "open": "Em aberto",
+      "history": "Histórico",
+      "total": "Total: {amount}",
+      "due": "Vence em {date}",
+      "paidOn": "Paga em {date}",
+      "blocked": "Seu acesso às aulas está pausado por pendências. Assim que o pagamento for registrado, tudo volta ao normal.",
+      "openEmpty": "Nada em aberto. Tudo em dia! ✨"
+    },
+    "notifications": {
+      "dueSoonTitle": "Sua mensalidade vence em {date} 📅",
+      "dueSoonBody": "Valor: {amount}. A chave Pix está no seu financeiro.",
+      "overdueTitle": "Cobrança em atraso ⏰",
+      "overdueBody": "A cobrança de {amount} venceu em {date}. A chave Pix está no seu financeiro.",
+      "dueSoonWhatsApp": "Oi, {name}! Passando para lembrar que sua mensalidade de {amount} vence em {date}. A chave Pix está no seu financeiro na Moonlang 🌙",
+      "overdueWhatsApp": "Oi, {name}! A cobrança de {amount}, que venceu em {date}, ainda está em aberto. Consegue ver isso pra mim? A chave Pix está no seu financeiro na Moonlang 🌙"
+    },
+    "errors": {
+      "forbidden": "Você não tem permissão para isso.",
+      "not_found": "Não encontramos esse registro.",
+      "invalid_due_day": "Escolha um dos dias de vencimento disponíveis.",
+      "already_started": "Esse plano já foi iniciado.",
+      "not_payable": "Essa cobrança não está em aberto.",
+      "not_paid": "Essa cobrança não está paga.",
+      "invalid_amount": "Confira o valor.",
+      "missing_profile": "O cadastro do aluno ainda não está completo.",
+      "dropped": "Essa participação não está ativa.",
+      "unknown": "Algo deu errado. Tente de novo."
+    }
+  }
+}

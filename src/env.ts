@@ -15,6 +15,11 @@ const schema = z.object({
   ),
   BETTER_AUTH_SECRET: z.string().min(32),
   BETTER_AUTH_URL: z.url(),
+  /** Bearer token for scheduled jobs such as /api/cron/billing. Unset disables them. */
+  CRON_SECRET: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.string().min(32).optional(),
+  ),
 });
 
 const parsed = schema.safeParse(process.env);
