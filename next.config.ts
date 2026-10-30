@@ -20,6 +20,8 @@ const nextConfig: NextConfig = {
   // Cache Components stays off: almost every page is per-user and dynamic.
   // See docs/decisoes/ADR-003.
   poweredByHeader: false,
+  // Self-contained server for the Docker image (ADR-004): only the files it needs.
+  output: "standalone",
   // PGlite loads its WebAssembly files from disk; it must not be bundled.
   serverExternalPackages: ["@electric-sql/pglite"],
   turbopack: {

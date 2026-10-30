@@ -1,7 +1,7 @@
 import "server-only";
 import { db } from "@/db";
 import { env } from "@/env";
-import { createConsoleEmailSender, createResendEmailSender, type EmailSender } from "./email";
+import { getEmailSender as sharedEmailSender } from "./sender";
 import {
   type AnnouncementAudience,
   type NotificationDeps,
@@ -31,19 +31,15 @@ export type { NotifyInput, QueueWhatsAppInput, AnnouncementAudience };
 export type { NotificationTemplate, TemplateKey } from "./templates";
 export { NOTIFICATION_TYPES } from "./types";
 
-let emailSender: EmailSender | undefined;
+let warned = false;
 
-function getEmailSender(): EmailSender {
-  if (!emailSender) {
-    emailSender =
-      env.RESEND_API_KEY && env.EMAIL_FROM
-        ? createResendEmailSender({ apiKey: env.RESEND_API_KEY, from: env.EMAIL_FROM })
-        : createConsoleEmailSender();
-    if (emailSender.name === "console" && env.NODE_ENV === "production") {
-      console.warn("[notifications] RESEND_API_KEY/EMAIL_FROM not set: e-mails are only logged.");
-    }
+function getEmailSender() {
+  const sender = sharedEmailSender();
+  if (!warned && sender.name === "console" && env.NODE_ENV === "production") {
+    warned = true;
+    console.warn("[notifications] SMTP_HOST/EMAIL_FROM not set: e-mails are only logged.");
   }
-  return emailSender;
+  return sender;
 }
 
 function deps(): NotificationDeps {

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import enMessages from "../../../messages/en/notifications.json";
 import ptMessages from "../../../messages/pt-BR/notifications.json";
-import { buildNotificationEmail, createResendEmailSender } from "./email";
+import { buildNotificationEmail, createSmtpEmailSender } from "./email";
 import { dueReminders, lessonPagePath, reminderRecipients } from "./reminders";
 import { assertSafeContent, containsMeetingLink, isPlatformPath } from "./safety";
 import { dateParams, interpolate, renderTemplate, renderWhatsAppText } from "./templates";
@@ -190,19 +190,29 @@ describe("e-mail", () => {
     expect(email.html).not.toContain("<b>Oi</b>");
   });
 
-  it("sends through the Resend API", async () => {
-    const fetchMock = vi.fn(async () => new Response("{}", { status: 200 }));
-    const sender = createResendEmailSender({ apiKey: "re_test", from: "Moonlang <ola@moonlang.com.br>", fetch: fetchMock });
+  it("sends through SMTP with the reply-to address", async () => {
+    const sendMail = vi.fn(async () => ({}));
+    const sender = createSmtpEmailSender({
+      transport: { sendMail },
+      from: "Moonlang <ola@moonlang.com.br>",
+      replyTo: "luana@example.com",
+    });
     await sender.send({ to: "ana@example.com", subject: "Oi", text: "t", html: "<p>t</p>" });
-    expect(fetchMock).toHaveBeenCalledWith(
-      "https://api.resend.com/emails",
-      expect.objectContaining({ method: "POST", headers: expect.objectContaining({ Authorization: "Bearer re_test" }) }),
-    );
+    expect(sendMail).toHaveBeenCalledWith({
+      from: "Moonlang <ola@moonlang.com.br>",
+      to: "ana@example.com",
+      replyTo: "luana@example.com",
+      subject: "Oi",
+      text: "t",
+      html: "<p>t</p>",
+    });
   });
 
-  it("throws when Resend rejects the e-mail", async () => {
-    const fetchMock = vi.fn(async () => new Response("{}", { status: 422 }));
-    const sender = createResendEmailSender({ apiKey: "k", from: "f", fetch: fetchMock });
-    await expect(sender.send({ to: "a@b.c", subject: "s", text: "t", html: "h" })).rejects.toThrow(/422/);
+  it("throws when the SMTP server rejects the e-mail", async () => {
+    const sendMail = vi.fn(async () => {
+      throw new Error("550 mailbox unavailable");
+    });
+    const sender = createSmtpEmailSender({ transport: { sendMail }, from: "f" });
+    await expect(sender.send({ to: "a@b.c", subject: "s", text: "t", html: "h" })).rejects.toThrow(/550/);
   });
 });

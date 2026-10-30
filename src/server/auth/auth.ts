@@ -88,6 +88,10 @@ export const auth = betterAuth({
   advanced: {
     useSecureCookies: env.NODE_ENV === "production",
     cookiePrefix: "moonlang",
+    // Every request arrives through the Cloudflare Tunnel (ADR-004), which sets
+    // CF-Connecting-IP. The web container publishes no port, so the header cannot
+    // be forged by a direct request. Used by rate limiting and the sessions list.
+    ipAddress: { ipAddressHeaders: ["cf-connecting-ip"] },
   },
   plugins: [
     twoFactor({ issuer: "Moonlang" }),

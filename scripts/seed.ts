@@ -1,5 +1,7 @@
 // Creates the root account, the initial plans and default settings.
 // Idempotent: safe to run more than once. Usage: pnpm db:seed
+// In production it runs on every deploy (migrate service, ADR-004); the root
+// account is only created when SEED_ROOT_EMAIL and SEED_ROOT_PASSWORD are set.
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { plan, setting, user } from "@/db/schema";
@@ -10,15 +12,15 @@ async function main() {
   const email = process.env.SEED_ROOT_EMAIL;
   const password = process.env.SEED_ROOT_PASSWORD;
   if (!email || !password) {
-    throw new Error("Set SEED_ROOT_EMAIL and SEED_ROOT_PASSWORD in .env.local.");
-  }
-
-  const [existing] = await db.select().from(user).where(eq(user.email, email.toLowerCase()));
-  if (existing) {
-    console.log("Root account already exists.");
+    console.log("SEED_ROOT_EMAIL/SEED_ROOT_PASSWORD not set: root account skipped.");
   } else {
-    await createUserWithPassword({ name: "Root", email, password, role: "root" });
-    console.log("Root account created.");
+    const [existing] = await db.select().from(user).where(eq(user.email, email.toLowerCase()));
+    if (existing) {
+      console.log("Root account already exists.");
+    } else {
+      await createUserWithPassword({ name: "Root", email, password, role: "root" });
+      console.log("Root account created.");
+    }
   }
 
   // Initial plans (RN-013).

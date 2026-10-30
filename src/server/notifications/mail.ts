@@ -1,10 +1,9 @@
 import "server-only";
-import { env } from "@/env";
-import { createResendEmailSender, type EmailSender } from "./email";
+import { getEmailSender } from "./sender";
 
 /**
- * E-mail adapter for F-001 (invites, password reset), delivered through Resend
- * when `RESEND_API_KEY` and `EMAIL_FROM` are set. Without them, messages are
+ * E-mail adapter for F-001 (invites, password reset), delivered through SMTP
+ * when `SMTP_HOST` and `EMAIL_FROM` are set. Without them, messages are
  * written to the console in development. In production nothing is logged,
  * because the body contains single-use links.
  */
@@ -13,8 +12,6 @@ export type MailInput = {
   subject: string;
   text: string;
 };
-
-let sender: EmailSender | undefined;
 
 function escapeHtml(text: string): string {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -35,13 +32,13 @@ function toHtml(text: string): string {
 }
 
 export async function sendMail(input: MailInput): Promise<void> {
-  if (env.RESEND_API_KEY && env.EMAIL_FROM) {
-    sender ??= createResendEmailSender({ apiKey: env.RESEND_API_KEY, from: env.EMAIL_FROM });
+  const sender = getEmailSender();
+  if (sender.name !== "console") {
     await sender.send({ ...input, html: toHtml(input.text) });
     return;
   }
   if (process.env.NODE_ENV === "production") {
-    console.warn("[mail] RESEND_API_KEY/EMAIL_FROM not set; message not sent.");
+    console.warn("[mail] SMTP_HOST/EMAIL_FROM not set; message not sent.");
     return;
   }
   console.info(`[mail] To: ${input.to}\n[mail] Subject: ${input.subject}\n${input.text}`);

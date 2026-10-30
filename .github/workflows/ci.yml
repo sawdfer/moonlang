@@ -16,7 +16,7 @@ jobs:
   check:
     runs-on: ubuntu-latest
     env:
-      # Build-time placeholders only; real secrets live in Vercel.
+      # Build-time placeholders only; real secrets live in Coolify.
       BETTER_AUTH_SECRET: ci-placeholder-secret-with-at-least-32-chars
       BETTER_AUTH_URL: http://localhost:3000
       NEXT_TELEMETRY_DISABLED: 1
@@ -33,6 +33,21 @@ jobs:
       - run: pnpm build
       - name: Audit dependencies
         run: pnpm audit --prod --audit-level high
+
+  # The same images Coolify builds (ADR-004), so a broken Dockerfile fails here first.
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build --target runner -t moonlang:ci .
+      - run: docker build --target tools -t moonlang-tools:ci .
+      - run: docker compose config --quiet
+        env:
+          POSTGRES_PASSWORD: ci
+          BETTER_AUTH_SECRET: ci-placeholder-secret-with-at-least-32-chars
+          BETTER_AUTH_URL: http://localhost:3000
+          CRON_SECRET: ci-placeholder-cron-secret-with-32-chars
+          CLOUDFLARE_TUNNEL_TOKEN: ci
 
   secrets:
     runs-on: ubuntu-latest

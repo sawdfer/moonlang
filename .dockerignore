@@ -1,0 +1,16 @@
+# Never sent to the image build: local-only docs, secrets, toolchain and data.
+.git
+.github
+.claude
+.tooling
+.data
+.next
+node_modules
+docs
+CLAUDE.md
+AGENTS.md
+.env*
+coverage
+*.tsbuildinfo
+Dockerfile
+docker-compose*.yml

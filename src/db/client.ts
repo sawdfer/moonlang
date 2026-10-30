@@ -1,8 +1,8 @@
 import { PGlite } from "@electric-sql/pglite";
-import { Pool } from "@neondatabase/serverless";
-import { drizzle as drizzleNeon } from "drizzle-orm/neon-serverless";
+import { drizzle as drizzlePg } from "drizzle-orm/node-postgres";
 import type { PgDatabase, PgQueryResultHKT } from "drizzle-orm/pg-core";
 import { drizzle as drizzlePglite } from "drizzle-orm/pglite";
+import { Pool } from "pg";
 import * as schema from "./schema";
 
 /** Local PGlite data directory used when no DATABASE_URL is set. */
@@ -10,7 +10,7 @@ export const LOCAL_DB_DIR = ".data/pglite";
 
 /**
  * Creates a Drizzle client.
- * - With a connection string: Neon serverless driver (supports transactions).
+ * - With a connection string: node-postgres pool (the Postgres service on the VPS, ADR-004).
  * - With `null`: embedded PGlite stored in `.data/pglite` (local development).
  * - With `"memory"`: in-memory PGlite (tests).
  */
@@ -21,8 +21,9 @@ export function createDatabase(
   connection: string | "memory" | null,
 ): Database {
   if (connection && connection !== "memory") {
-    return drizzleNeon({
-      client: new Pool({ connectionString: connection }),
+    return drizzlePg({
+      // Small pool: one web container and one scheduler share a small VPS.
+      client: new Pool({ connectionString: connection, max: 10 }),
       schema,
       casing: "snake_case",
     }) as unknown as Database;

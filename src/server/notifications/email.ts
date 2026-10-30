@@ -1,4 +1,4 @@
-// E-mail delivery for notifications (F-008). Resend in production, console in development.
+// E-mail delivery for notifications (F-008). SMTP in production, console in development.
 import type { Locale } from "@/i18n/config";
 import { emailStrings, interpolate } from "./templates";
 
@@ -24,34 +24,35 @@ export function createConsoleEmailSender(log: (line: string) => void = console.i
   };
 }
 
-/** Sends through the Resend HTTP API (https://resend.com/docs/api-reference/emails/send-email). */
-export function createResendEmailSender(options: {
-  apiKey: string;
+/** The part of a nodemailer transport the sender needs (injectable in tests). */
+export type MailTransport = {
+  sendMail(message: {
+    from: string;
+    to: string;
+    replyTo?: string;
+    subject: string;
+    text: string;
+    html: string;
+  }): Promise<unknown>;
+};
+
+/** Sends through any SMTP provider (ADR-004), so changing provider is only configuration. */
+export function createSmtpEmailSender(options: {
+  transport: MailTransport;
   from: string;
-  fetch?: typeof fetch;
+  replyTo?: string;
 }): EmailSender {
-  const doFetch = options.fetch ?? fetch;
   return {
-    name: "resend",
+    name: "smtp",
     async send(message) {
-      const response = await doFetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${options.apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from: options.from,
-          to: [message.to],
-          subject: message.subject,
-          text: message.text,
-          html: message.html,
-        }),
-        signal: AbortSignal.timeout(10_000),
+      await options.transport.sendMail({
+        from: options.from,
+        to: message.to,
+        ...(options.replyTo ? { replyTo: options.replyTo } : {}),
+        subject: message.subject,
+        text: message.text,
+        html: message.html,
       });
-      if (!response.ok) {
-        throw new Error(`Resend responded ${response.status}`);
-      }
     },
   };
 }
