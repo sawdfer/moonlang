@@ -5,7 +5,8 @@ import billing from "./billing.json";
 import classes from "./classes.json";
 import common from "./common.json";
 import notifications from "./notifications.json";
+import people from "./people.json";
 
-const messages = { ...common, ...auth, ...classes, ...billing, ...notifications };
+const messages = { ...common, ...auth, ...classes, ...billing, ...notifications, ...people };
 
 export default messages;

@@ -10,7 +10,7 @@ import { env } from "@/env";
 import { sendMail } from "@/server/notifications/mail";
 import { canDisableTwoFactor } from "./access";
 import { localeOf, mailTranslator } from "./mail-text";
-import type { Role } from "./roles";
+import { isStaff, type Role } from "./roles";
 
 /** Marks the reset link sent to a new staff account, so the e-mail reads as a welcome. */
 export const WELCOME_RESET_PATH = "/reset-password?welcome=1";
@@ -40,10 +40,12 @@ export const auth = betterAuth({
     sendResetPassword: async ({ user, url }) => {
       const t = mailTranslator(await localeOf(user.id));
       const welcome = url.includes(encodeURIComponent(WELCOME_RESET_PATH));
+      // Staff accounts (F-001) and students registered by the teacher (F-002) get different welcomes.
+      const kind = !welcome ? "reset" : isStaff((user as { role?: string }).role as Role) ? "welcome" : "welcomeStudent";
       await sendMail({
         to: user.email,
-        subject: t(welcome ? "welcomeSubject" : "resetSubject"),
-        text: t(welcome ? "welcomeBody" : "resetBody", { name: user.name, url }),
+        subject: t(`${kind}Subject`),
+        text: t(`${kind}Body`, { name: user.name, url }),
       });
     },
   },
