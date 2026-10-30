@@ -85,7 +85,7 @@ services:
         condition: service_healthy
     mem_limit: 128m
 
-  # Daily logical backup (pg_dump), 14 days kept in the "backups" volume.
+  # Daily logical backup (pg_dump), 8 weeks kept in the "backups" volume (P27).
   # Copy this volume off the VPS too: a backup on the same disk does not survive losing the VPS.
   db-backup:
     image: postgres:17.10-alpine3.24
@@ -95,7 +95,7 @@ services:
       PGUSER: moonlang
       PGDATABASE: moonlang
       PGPASSWORD: ${POSTGRES_PASSWORD:?}
-      BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-14}
+      BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-56}
     volumes:
       - backups:/backups
     entrypoint:

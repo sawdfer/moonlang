@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Termos e privacidade" };
 
 const SECTIONS = ["recording", "data", "sharing", "storage", "rights", "changes"] as const;
 
-/** Recording term and privacy policy, versioned (RN-023, RN-028). Linked from every footer. */
+/** Recording term and privacy policy, versioned (RN-023). Linked from every footer. */
 export default async function TermsPage() {
   const [t, format] = await Promise.all([getTranslations("auth.terms"), getFormatter()]);
   return (

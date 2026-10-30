@@ -176,17 +176,6 @@ export function attendanceOnJoin(slot: TimeSlot, now: Date): "present" | "late_a
 }
 
 /**
- * A lesson recording is only for students who joined that lesson, or whom the
- * teacher released, whatever class group they are in now (RN-028, V4).
- */
-export function canWatchRecording(input: {
-  attendance: "expected" | "present" | "absent" | "late_absent" | "cancelled_in_time" | "cancelled_late" | null;
-  released: boolean;
-}): boolean {
-  return input.released || input.attendance === "present";
-}
-
-/**
  * First date a person may take another trial lesson, given the dates of their
  * previous trial lessons (RN-018: one every 3 months). `null` when there is none.
  */

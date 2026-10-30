@@ -2,7 +2,6 @@ import { getTranslations } from "next-intl/server";
 
 const AREAS = [
   { key: "materials", emoji: "📚" },
-  { key: "recordings", emoji: "🎬" },
   { key: "progress", emoji: "📈" },
   { key: "tasks", emoji: "✍️" },
   { key: "posts", emoji: "💬" },
@@ -10,7 +9,7 @@ const AREAS = [
 
 /**
  * Locked preview of the areas a trial user can't open yet (RN-018, F-006).
- * Purely static: it never loads materials, recordings or anyone's data.
+ * Purely static: it never loads materials or anyone's data.
  */
 export async function LockedTeasers() {
   const t = await getTranslations("studentLessons.locked");

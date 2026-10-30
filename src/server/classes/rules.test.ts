@@ -5,7 +5,6 @@ import {
   attendanceForArrival,
   attendanceOnJoin,
   canJoinLesson,
-  canWatchRecording,
   checkSchedule,
   isAllowedMeetingUrl,
   isBlocked,
@@ -309,16 +308,6 @@ describe("join window and attendance on join", () => {
     expect(attendanceOnJoin(slot, zonedDateTime("2026-11-10", "18:50"))).toBe("present");
     expect(attendanceOnJoin(slot, zonedDateTime("2026-11-10", "19:20"))).toBe("present");
     expect(attendanceOnJoin(slot, zonedDateTime("2026-11-10", "19:21"))).toBe("late_absent");
-  });
-});
-
-describe("canWatchRecording", () => {
-  it("RN-028, V4: only students who joined the lesson, or were released, see the recording", () => {
-    expect(canWatchRecording({ attendance: "present", released: false })).toBe(true);
-    expect(canWatchRecording({ attendance: "absent", released: false })).toBe(false);
-    expect(canWatchRecording({ attendance: "late_absent", released: false })).toBe(false);
-    expect(canWatchRecording({ attendance: null, released: false })).toBe(false);
-    expect(canWatchRecording({ attendance: null, released: true })).toBe(true);
   });
 });
 

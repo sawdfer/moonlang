@@ -21,13 +21,15 @@ pnpm dev
 | `pnpm check` | Lint + type check + tests (run before every commit) |
 | `pnpm build` | Production build |
 | `pnpm test` / `pnpm test:watch` | Vitest |
-| `pnpm db:push` | Apply the Drizzle schema to the database |
+| `pnpm db:push` | Apply the Drizzle schema to the local database |
+| `pnpm db:generate` | Create a versioned migration in `drizzle/` from schema changes |
+| `pnpm db:migrate` | Apply the migrations in `drizzle/` (what production runs) |
 | `pnpm db:studio` | Browse the database |
 | `pnpm db:seed` | Idempotent seed |
 
 ## Stack
 
-Next.js 16 (App Router, Cache Components **off**) · TypeScript · Tailwind CSS 4 · Drizzle ORM · PGlite locally / Neon in production · Better Auth · next-intl · Vitest.
+Next.js 16 (App Router, Cache Components **off**) · TypeScript · Tailwind CSS 4 · Drizzle ORM · PGlite locally / PostgreSQL in production · Better Auth · next-intl · Vitest.
 
 This Next.js version differs from older ones (e.g. `middleware` is now `src/proxy.ts`). Read `node_modules/next/dist/docs/` before using an API you are not sure about.
 
@@ -41,6 +43,8 @@ src/
     (app)/student/      student and trial area
     (app)/admin/        admin-only settings
     api/auth/           Better Auth handler
+    api/cron/           scheduled jobs, called by the scheduler service
+    api/health/         container health check
   server/<domain>/      business logic, one folder per domain
   db/schema/<domain>.ts Drizzle tables, one file per domain
   components/ui/        shared UI primitives
@@ -63,13 +67,33 @@ Domains: `auth`, `people` (students, invites, consents), `classes` (class groups
 - **Sensitive actions** (manual adjustments, payments, role changes, deletions) call `recordAudit()` from `@/server/audit`.
 - **Notifications:** other domains call `notify()` and `queueWhatsApp()` from `@/server/notifications`; they never write notification tables directly.
 - **Dates:** use `date-fns` with `@date-fns/tz` and the helpers in `@/lib/dates`.
-- **No secrets in code.** Use `.env.local` locally and Vercel environment variables in production.
+- **No secrets in code.** Use `.env.local` locally and Coolify environment variables in production.
 
 ## Database changes
 
 - Edit only the schema file of your domain. Changes to shared tables (`auth`, `plans`) need coordination.
-- During MVP development there are **no migration files**: use `pnpm db:push`. Migrations will be generated once, before the first deploy.
+- Locally, `pnpm db:push` syncs the schema with the PGlite database.
+- Every schema change also needs a migration: run `pnpm db:generate` and commit the new file in `drizzle/`. Production only runs `drizzle-kit migrate` (never `push`). Review the generated SQL before committing, especially renames and drops.
 - Tests use `createTestDb()` from `@/test/db` (in-memory PGlite with the full schema).
+
+## Deployment
+
+Production runs on a VPS with Coolify, behind Cloudflare (see ADR-004 in the local docs). `docker-compose.yml` defines the services, all from the `Dockerfile`:
+
+| Service | Role |
+|---|---|
+| `web` | Next.js standalone server (`node server.js`) |
+| `scheduler` | `node scheduler.mjs`: calls `/api/cron/*` with `CRON_SECRET` on schedule (UTC) |
+| `migrate` | One-shot, before `web`: `drizzle-kit migrate` + idempotent seed |
+| `postgres` | PostgreSQL 17, internal network only |
+| `db-backup` | Daily `pg_dump` into the `backups` volume |
+| `cloudflared` | Cloudflare Tunnel to `web:3000`; no port is published on the VPS |
+
+- Environment variables are listed in `.env.example`. Set them in the Coolify resource, never in the repository.
+- The web container trusts `CF-Connecting-IP` for the client IP, which is only safe because nothing but the tunnel reaches it. Do not publish the `web` port.
+- Do not set a domain for `web` in Coolify: the public hostname lives in the tunnel configuration.
+- Base images are pinned to versions at least 7 days old, like npm packages. Dependabot proposes updates.
+- Docker is not needed for local development. CI builds the images on every push.
 
 ## Git
 
