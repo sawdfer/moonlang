@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { SignOutButton } from "@/components/forms/sign-out-button";
 import { NotificationBell } from "@/components/notifications";
+import { UserPreferenceSwitchers } from "@/components/preferences";
 import { isAdmin, isStaff, type Role } from "@/server/auth/roles";
 import { getCurrentUser } from "@/server/auth/session";
 
@@ -30,7 +31,7 @@ function navFor(role: Role): NavItem[] {
   return items;
 }
 
-/** Header of every signed-in page: navigation by role, notifications and sign out. */
+/** Header of every signed-in page: navigation by role, language and theme (F-010), notifications and sign out. */
 export async function AppHeader() {
   const user = await getCurrentUser();
   if (!user) return null;
@@ -60,8 +61,13 @@ export async function AppHeader() {
         <Link href="/account/security" className="hidden rounded-lg px-3 py-2 text-sm hover:bg-muted sm:block">
           {t("account")}
         </Link>
+        <UserPreferenceSwitchers className="hidden xl:flex" />
         <NotificationBell />
         <SignOutButton variant="ghost" />
+      </div>
+      {/* On small screens the switchers get their own row so the navigation keeps its space. */}
+      <div className="mx-auto flex max-w-6xl justify-end px-4 pb-3 xl:hidden">
+        <UserPreferenceSwitchers />
       </div>
     </header>
   );

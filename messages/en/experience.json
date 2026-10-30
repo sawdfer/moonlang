@@ -1,0 +1,99 @@
+{
+  "dashboard": {
+    "title": "Dashboard",
+    "greeting": "Hi, {name}! 🌙",
+    "today": "Today is {date}.",
+    "todayLessons": "Today's lessons",
+    "join": "Join lesson",
+    "noLink": "No meeting link",
+    "details": "Details",
+    "individual": "Individual lesson",
+    "participants": "{count, plural, =0 {No students} one {# student} other {# students}}",
+    "status": {
+      "pending": "Awaiting approval",
+      "confirmed": "Confirmed",
+      "done": "Done"
+    },
+    "kind": {
+      "weekly": "Weekly",
+      "extra": "Extra",
+      "one_off": "One-off",
+      "trial": "Trial",
+      "makeup": "Make-up"
+    },
+    "requests": "Pending lesson requests",
+    "requestedBy": "Requested by {name}",
+    "review": "Review",
+    "people": "New students and first payments",
+    "newStudents": "Joined in the last 7 days",
+    "noNewStudents": "Nobody new this week.",
+    "joinedOn": "Joined on {date}",
+    "trial": "Trial",
+    "student": "Student",
+    "awaitingFirstPayment": "Waiting for the first charge",
+    "noAwaitingFirstPayment": "No first charges open.",
+    "charges": "Pending or overdue charges",
+    "chargesSummary": "{open} open · {overdue} overdue · total {total}",
+    "dueOn": "Due {date}",
+    "overdue": "Overdue",
+    "pending": "Pending",
+    "seeAllCharges": "Open finance",
+    "moreCharges": "and {count} more",
+    "whatsapp": "WhatsApp queue",
+    "whatsappCount": "{count, plural, =0 {No messages to send} one {# message to send} other {# messages to send}}",
+    "openQueue": "Open queue",
+    "adminShortcuts": "Admin shortcuts",
+    "settings": "Settings",
+    "metricsSoon": "Monthly metrics arrive in a future version."
+  },
+  "fun": {
+    "noLessonsToday": {
+      "basic": "No lessons today. Even the moon rests sometimes 🌙",
+      "intermediate": "No lessons today. Even the moon takes a day off 🌙",
+      "advanced": "No lessons today. Even the moon needs its beauty sleep 🌙"
+    },
+    "noUpcomingLessons": {
+      "basic": "No lessons booked yet. Time to rest a little 😴",
+      "intermediate": "No lessons booked yet. Time to chill 😎",
+      "advanced": "No lessons on the calendar yet. Perfect excuse to binge a series 🍿"
+    },
+    "noRequests": {
+      "basic": "No requests waiting. All done! ✅",
+      "intermediate": "No requests waiting. All good! ✅",
+      "advanced": "No pending requests. Smooth sailing ⛵"
+    },
+    "noOpenCharges": {
+      "basic": "No open charges. All good 💜",
+      "intermediate": "No open charges. Easy peasy 💜",
+      "advanced": "No open charges. Easy peasy lemon squeezy 🍋"
+    },
+    "emptyQueue": {
+      "basic": "No messages to send ✨",
+      "intermediate": "Inbox zero, baby ✨",
+      "advanced": "Inbox zero. Over the moon about it ✨"
+    },
+    "allSet": {
+      "basic": "All ready! 🎉",
+      "intermediate": "All set! You rock 🎉",
+      "advanced": "All set! You're over the moon 🎉"
+    },
+    "welcome": {
+      "basic": "Welcome to Moonlang! 🌙",
+      "intermediate": "Welcome! So good to have you here 🌙",
+      "advanced": "Welcome aboard! Let's shoot for the moon 🌙"
+    }
+  },
+  "switchers": {
+    "language": "Language",
+    "theme": "Theme",
+    "languages": {
+      "pt-BR": "Português",
+      "en": "English"
+    },
+    "themes": {
+      "system": "System",
+      "light": "Light",
+      "dark": "Night mode"
+    }
+  }
+}
