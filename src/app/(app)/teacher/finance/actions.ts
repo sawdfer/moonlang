@@ -5,7 +5,11 @@ import { z } from "zod";
 import { toDateString } from "@/lib/dates";
 import { requireStaff } from "@/server/auth/session";
 import {
+  addCharge,
   BillingError,
+  cancelCharge,
+  editCharge,
+  manualUnblock,
   markChargePaid,
   registerDropout,
   startPlan,
@@ -73,6 +77,55 @@ export async function dropoutAction(_prev: ActionResult, form: FormData): Promis
     registerDropout(actor, {
       enrollmentId: String(form.get("enrollmentId")),
       reason: String(form.get("reason") ?? "").slice(0, 500),
+    }),
+  );
+}
+
+const reasonOf = (form: FormData) => String(form.get("reason") ?? "").slice(0, 500);
+
+/** Staff unblock despite overdue charges, with a required reason (RN-012, RN-015, V7). */
+export async function unblockAction(_prev: ActionResult, form: FormData): Promise<ActionResult> {
+  const actor = await requireStaff();
+  return run(() => manualUnblock(actor, { enrollmentId: String(form.get("enrollmentId")), reason: reasonOf(form) }));
+}
+
+// Charge management below is admin/root only; the billing service enforces it (V7).
+
+export async function cancelChargeAction(_prev: ActionResult, form: FormData): Promise<ActionResult> {
+  const actor = await requireStaff();
+  return run(() => cancelCharge(actor, { chargeId: String(form.get("chargeId")), reason: reasonOf(form) }));
+}
+
+export async function editChargeAction(_prev: ActionResult, form: FormData): Promise<ActionResult> {
+  const actor = await requireStaff();
+  const amountCents = parseReaisToCents(String(form.get("amount") ?? ""));
+  const dueDate = day.safeParse(form.get("dueDate"));
+  if (amountCents === null) return { ok: false, error: "invalid_amount" };
+  if (!dueDate.success) return { ok: false, error: "invalid_date" };
+  return run(() =>
+    editCharge(actor, { chargeId: String(form.get("chargeId")), amountCents, dueDate: dueDate.data, reason: reasonOf(form) }),
+  );
+}
+
+export async function addChargeAction(_prev: ActionResult, form: FormData): Promise<ActionResult> {
+  const actor = await requireStaff();
+  const amountCents = parseReaisToCents(String(form.get("amount") ?? ""));
+  const dueDate = day.safeParse(form.get("dueDate"));
+  const optionalDay = (name: string) => {
+    const value = String(form.get(name) ?? "");
+    return value ? value : undefined;
+  };
+  if (amountCents === null) return { ok: false, error: "invalid_amount" };
+  if (!dueDate.success) return { ok: false, error: "invalid_date" };
+  return run(() =>
+    addCharge(actor, {
+      enrollmentId: String(form.get("enrollmentId")),
+      kind: form.get("kind") === "monthly" ? "monthly" : "extra_lesson",
+      amountCents,
+      dueDate: dueDate.data,
+      periodStart: optionalDay("periodStart"),
+      periodEnd: optionalDay("periodEnd"),
+      reason: reasonOf(form),
     }),
   );
 }

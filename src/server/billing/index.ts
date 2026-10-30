@@ -7,14 +7,17 @@ import { APP_TIME_ZONE, toDateString } from "@/lib/dates";
 import { recordAudit } from "@/server/audit";
 import { isAdmin, isStaff, type Role } from "@/server/auth/roles";
 import { getSetting } from "@/server/settings";
-import { noticeDueSoon, noticeOverdue } from "./notices";
+import { noticeBlockWarning, noticeDueSoon, noticeOverdue } from "./notices";
 import {
   blockingDecision,
+  blockingOverdueCharges,
+  blockWarning,
   type ChargeDraft,
   chargeAfterUnblock,
   coveredUntil,
   cycleEnd,
   type Day,
+  dueSoonCharges,
   effectiveStatus,
   extraLessonDueDate,
   extraLessonPriceCents,
@@ -39,7 +42,12 @@ export class BillingError extends Error {
       | "not_paid"
       | "invalid_amount"
       | "missing_profile"
-      | "dropped",
+      | "dropped"
+      | "reason_required"
+      | "invalid_date"
+      | "duplicate_cycle"
+      | "not_blocked"
+      | "not_editable",
     message?: string,
   ) {
     super(message ?? code);
@@ -48,6 +56,23 @@ export class BillingError extends Error {
 
 function assertStaff(actor: Actor) {
   if (!isStaff(actor.role)) throw new BillingError("forbidden");
+}
+
+/** Managing a student's charges is admin/root only (RN-015, V7). */
+function assertAdmin(actor: Actor) {
+  if (!isAdmin(actor.role)) throw new BillingError("forbidden");
+}
+
+/** Manual changes always carry a reason for the audit log (RN-012, V7). */
+function requireReason(reason: string | undefined): string {
+  const text = reason?.trim() ?? "";
+  if (!text) throw new BillingError("reason_required");
+  return text.slice(0, 500);
+}
+
+function isUniqueViolation(error: unknown): boolean {
+  const e = error as { code?: string; cause?: { code?: string } };
+  return e?.code === "23505" || e?.cause?.code === "23505";
 }
 
 /** Teachers only manage their own class groups; admins and root manage everything (02-perfis). */
@@ -237,9 +262,21 @@ export async function reconcileEnrollment(enrollmentId: string, now = new Date()
     if (!draft) break;
     const [created] = await insertDraft(ctx.student.id, enrollmentId, draft);
     charges.push(created!);
-    if (draft.dueDate >= today) {
-      await noticeDueSoon(ctx.student, { chargeId: created!.id, amountCents: draft.amountCents, dueDate: draft.dueDate });
-    }
+  }
+
+  // Blocked students get no reminders (V8); they still see everything on their finance page.
+  if (status !== "active") return;
+  for (const c of dueSoonCharges(charges, today)) {
+    await noticeDueSoon(ctx.student, { chargeId: c.id, amountCents: c.amountCents, dueDate: c.dueDate });
+  }
+  const warning = blockWarning({ status, charges, dueDay: ctx.dueDay, today });
+  if (warning) {
+    await noticeBlockWarning(ctx.student, {
+      chargeId: warning.charge.id,
+      amountCents: warning.charge.amountCents,
+      dueDate: warning.charge.dueDate,
+      deadline: warning.deadline,
+    });
   }
 }
 
@@ -412,6 +449,173 @@ export async function registerDropout(
     reason: input.reason?.trim() || undefined,
   });
   return updated;
+}
+
+/**
+ * Unblocks a student despite overdue charges, after a deal made outside the
+ * platform (RN-012, RN-015, V7). The overdue charges stay open but stop counting
+ * for blocking; new overdue charges count again.
+ */
+export async function manualUnblock(
+  actor: Actor,
+  input: { enrollmentId: string; reason?: string },
+  now = new Date(),
+) {
+  await assertManagesEnrollment(actor, input.enrollmentId);
+  const reason = requireReason(input.reason);
+  const ctx = await loadEnrollmentContext(input.enrollmentId);
+  if (!ctx) throw new BillingError("not_found");
+  if (ctx.enrollment.status !== "blocked") throw new BillingError("not_blocked");
+
+  const waived = blockingOverdueCharges(ctx.charges, toDateString(now));
+  if (waived.length) {
+    await db
+      .update(charge)
+      .set({ blockWaivedAt: now })
+      .where(inArray(charge.id, waived.map((c) => c.id)));
+  }
+  await recordAudit({
+    actorId: actor.id,
+    action: "enrollment.unblocked_manually",
+    entityType: "enrollment",
+    entityId: input.enrollmentId,
+    data: { waivedChargeIds: waived.map((c) => c.id) },
+    reason,
+  });
+  // With no blocking charge left, the usual unblock runs, prorated charge included (RN-015).
+  await reconcileEnrollment(input.enrollmentId, now);
+}
+
+async function loadChargeForAdmin(actor: Actor, chargeId: string) {
+  assertAdmin(actor);
+  const [row] = await db.select().from(charge).where(eq(charge.id, chargeId));
+  if (!row) throw new BillingError("not_found");
+  return row;
+}
+
+const DAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Cancels an open charge (V7). A cancelled monthly charge waives its cycle: it is not generated again. */
+export async function cancelCharge(actor: Actor, input: { chargeId: string; reason?: string }, now = new Date()) {
+  const current = await loadChargeForAdmin(actor, input.chargeId);
+  const reason = requireReason(input.reason);
+  if (current.status !== "pending" && current.status !== "overdue") throw new BillingError("not_editable");
+  await db.update(charge).set({ status: "cancelled" }).where(eq(charge.id, current.id));
+  await recordAudit({
+    actorId: actor.id,
+    action: "charge.cancelled",
+    entityType: "charge",
+    entityId: current.id,
+    data: { previousStatus: current.status, amountCents: current.amountCents, dueDate: current.dueDate },
+    reason,
+  });
+  if (current.enrollmentId) await reconcileEnrollment(current.enrollmentId, now);
+}
+
+/** Changes the amount and/or due date of an open charge, overdue ones included (V7). */
+export async function editCharge(
+  actor: Actor,
+  input: { chargeId: string; amountCents: number; dueDate: Day; reason?: string },
+  now = new Date(),
+) {
+  const current = await loadChargeForAdmin(actor, input.chargeId);
+  const reason = requireReason(input.reason);
+  if (current.status !== "pending" && current.status !== "overdue") throw new BillingError("not_editable");
+  if (!Number.isInteger(input.amountCents) || input.amountCents < 0) throw new BillingError("invalid_amount");
+  if (!DAY_PATTERN.test(input.dueDate)) throw new BillingError("invalid_date");
+
+  const status = effectiveStatus({ status: "pending", dueDate: input.dueDate }, toDateString(now));
+  await db
+    .update(charge)
+    .set({ amountCents: input.amountCents, dueDate: input.dueDate, status })
+    .where(eq(charge.id, current.id));
+  await recordAudit({
+    actorId: actor.id,
+    action: "charge.edited",
+    entityType: "charge",
+    entityId: current.id,
+    data: {
+      from: { amountCents: current.amountCents, dueDate: current.dueDate, status: current.status },
+      to: { amountCents: input.amountCents, dueDate: input.dueDate, status },
+    },
+    reason,
+  });
+  if (current.enrollmentId) await reconcileEnrollment(current.enrollmentId, now);
+}
+
+/**
+ * Adds a charge by hand (V7): a monthly fee, optionally for a cycle, or a
+ * one-off item. Two cycle charges can never share a period start.
+ */
+export async function addCharge(
+  actor: Actor,
+  input: {
+    enrollmentId: string;
+    kind: "monthly" | "extra_lesson";
+    amountCents: number;
+    dueDate: Day;
+    periodStart?: Day;
+    periodEnd?: Day;
+    reason?: string;
+  },
+  now = new Date(),
+) {
+  assertAdmin(actor);
+  const reason = requireReason(input.reason);
+  if (!Number.isInteger(input.amountCents) || input.amountCents <= 0) throw new BillingError("invalid_amount");
+  if (!DAY_PATTERN.test(input.dueDate)) throw new BillingError("invalid_date");
+  const hasPeriod = Boolean(input.periodStart || input.periodEnd);
+  if (
+    hasPeriod &&
+    (input.kind !== "monthly" ||
+      !DAY_PATTERN.test(input.periodStart ?? "") ||
+      !DAY_PATTERN.test(input.periodEnd ?? "") ||
+      input.periodEnd! < input.periodStart!)
+  ) {
+    throw new BillingError("invalid_date");
+  }
+  const [row] = await db
+    .select({ studentId: enrollment.studentId })
+    .from(enrollment)
+    .where(eq(enrollment.id, input.enrollmentId));
+  if (!row) throw new BillingError("not_found");
+
+  const today = toDateString(now);
+  let created;
+  try {
+    [created] = await db
+      .insert(charge)
+      .values({
+        studentId: row.studentId,
+        enrollmentId: input.enrollmentId,
+        kind: input.kind,
+        periodStart: hasPeriod ? input.periodStart : null,
+        periodEnd: hasPeriod ? input.periodEnd : null,
+        amountCents: input.amountCents,
+        dueDate: input.dueDate,
+        status: effectiveStatus({ status: "pending", dueDate: input.dueDate }, today),
+      })
+      .returning();
+  } catch (error) {
+    if (isUniqueViolation(error)) throw new BillingError("duplicate_cycle");
+    throw error;
+  }
+  await recordAudit({
+    actorId: actor.id,
+    action: "charge.added",
+    entityType: "charge",
+    entityId: created!.id,
+    data: {
+      kind: input.kind,
+      amountCents: input.amountCents,
+      dueDate: input.dueDate,
+      periodStart: input.periodStart ?? null,
+      periodEnd: input.periodEnd ?? null,
+    },
+    reason,
+  });
+  await reconcileEnrollment(input.enrollmentId, now);
+  return created!;
 }
 
 /**

@@ -12,8 +12,10 @@ export type ChargeKind = "first_prorated" | "monthly" | "extra_lesson";
 export type ChargeStatus = "pending" | "paid" | "overdue" | "cancelled";
 export type EnrollmentStatus = "active" | "blocked" | "dropped";
 
-/** Days before the due date when the monthly charge is generated and the student is told (F-007). */
-export const MONTHLY_LEAD_DAYS = 3;
+/** Days before the due date when the monthly charge is generated, so the student sees it early (V6). */
+export const MONTHLY_LEAD_DAYS = 7;
+/** Days before the due date of the "due in 3 days" notice (F-007, V6). */
+export const DUE_SOON_DAYS = 3;
 /** Monthly charges past due that block an enrollment (RN-015). */
 export const OPEN_MONTHLY_CHARGES_TO_BLOCK = 2;
 
@@ -145,6 +147,8 @@ export type ChargeFacts = {
   dueDate: Day;
   periodStart: Day | null;
   periodEnd: Day | null;
+  /** Set when staff unblocked the student despite this overdue charge (V7). */
+  blockWaivedAt?: Date | null;
 };
 
 /** Unpaid charges become overdue the day after the due date (RN-015). */
@@ -153,11 +157,17 @@ export function effectiveStatus(charge: Pick<ChargeFacts, "status" | "dueDate">,
   return charge.status;
 }
 
-/** Last day already covered by a first or monthly charge, or null if none. */
+/**
+ * Last day already covered by a first or monthly charge, or null if none. A
+ * monthly charge the admin cancelled still covers its cycle, so the cycle is
+ * waived instead of generated again (V7). A cancelled first charge does not:
+ * the plan never started.
+ */
 export function coveredUntil(charges: readonly ChargeFacts[]): Day | null {
   let last: Day | null = null;
   for (const c of charges) {
-    if (c.kind === "extra_lesson" || c.status === "cancelled" || !c.periodEnd) continue;
+    if (c.kind === "extra_lesson" || !c.periodEnd) continue;
+    if (c.kind === "first_prorated" && c.status === "cancelled") continue;
     if (!last || c.periodEnd > last) last = c.periodEnd;
   }
   return last;
@@ -197,9 +207,18 @@ export function nextMonthlyCharge(input: {
   };
 }
 
-/** Monthly charges past their due date and unpaid. The first charge never counts (F-007). */
+/**
+ * Overdue monthly charges that count for blocking. The first charge never
+ * counts (F-007), nor do charges waived by a manual unblock (V7).
+ */
+export function blockingOverdueCharges<T extends ChargeFacts>(charges: readonly T[], today: Day): T[] {
+  return charges.filter(
+    (c) => c.kind === "monthly" && !c.blockWaivedAt && effectiveStatus(c, today) === "overdue",
+  );
+}
+
 export function overdueMonthlyCount(charges: readonly ChargeFacts[], today: Day): number {
-  return charges.filter((c) => c.kind === "monthly" && effectiveStatus(c, today) === "overdue").length;
+  return blockingOverdueCharges(charges, today).length;
 }
 
 /**
@@ -242,6 +261,47 @@ export function chargeAfterUnblock(input: {
   // No lesson left in this cycle: the next one is a regular prepaid charge.
   if (draft.lessons === 0) draft.dueDate = draft.periodStart;
   return draft;
+}
+
+/**
+ * "Before you are blocked" warning (RN-015): with one overdue monthly charge,
+ * the student is blocked when the next monthly charge also goes unpaid. The
+ * deadline is that next due date.
+ */
+export function blockWarning<T extends ChargeFacts>(input: {
+  status: EnrollmentStatus;
+  charges: readonly T[];
+  dueDay: number;
+  today: Day;
+}): { charge: T; deadline: Day } | null {
+  if (input.status !== "active") return null;
+  const overdue = blockingOverdueCharges(input.charges, input.today);
+  if (overdue.length !== OPEN_MONTHLY_CHARGES_TO_BLOCK - 1) return null;
+  const nextPending = input.charges
+    .filter((c) => c.kind === "monthly" && effectiveStatus(c, input.today) === "pending")
+    .map((c) => c.dueDate)
+    .sort()[0];
+  const covered = coveredUntil(input.charges);
+  const deadline = nextPending ?? (covered ? shiftDay(covered, 1) : nextDueDate(input.today, input.dueDay));
+  return { charge: overdue[0]!, deadline };
+}
+
+/**
+ * Pending monthly charges due in 1 to 3 days, for the "due in 3 days" notice
+ * (V6). A range, so a missed daily run still sends it; charges due today (such
+ * as the prorated one after an unblock) were just shown to the student.
+ */
+export function dueSoonCharges<T extends ChargeFacts>(charges: readonly T[], today: Day): T[] {
+  return charges.filter((c) => {
+    if (c.kind !== "monthly" || effectiveStatus(c, today) !== "pending") return false;
+    const days = daysBetween(today, c.dueDate);
+    return days >= 1 && days <= DUE_SOON_DAYS;
+  });
+}
+
+/** Message key for a charge: an "extra lesson" charge without a lesson is a one-off item added by the admin (V7). */
+export function chargeLabelKey(c: { kind: ChargeKind; lessonId: string | null }): ChargeKind | "one_off" {
+  return c.kind === "extra_lesson" && !c.lessonId ? "one_off" : c.kind;
 }
 
 /** Extra lesson price: hours × hourly price (RN-026). */

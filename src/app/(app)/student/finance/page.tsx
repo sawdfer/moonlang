@@ -5,7 +5,7 @@ import { toDateString } from "@/lib/dates";
 import { formatBRL } from "@/lib/money";
 import { requireUser } from "@/server/auth/session";
 import { getOwnFinance } from "@/server/billing/queries";
-import { parseDay } from "@/server/billing/rules";
+import { chargeLabelKey, parseDay } from "@/server/billing/rules";
 import { getSetting } from "@/server/settings";
 import { StatusBadge } from "../../teacher/finance/_components/status-badge";
 import { CopyButton } from "./copy-button";
@@ -91,7 +91,7 @@ export default async function StudentFinancePage() {
                   {items.map((c) => (
                     <li key={c.id} className="flex justify-between gap-3">
                       <span className="text-muted-foreground">
-                        {tKind(c.kind)}
+                        {tKind(chargeLabelKey(c))}
                         {c.groupName ? ` · ${c.groupName}` : ""}
                         {c.periodStart && c.periodEnd
                           ? ` · ${tBilling("period", { start: day(c.periodStart), end: day(c.periodEnd) })}`
@@ -117,7 +117,7 @@ export default async function StudentFinancePage() {
             {history.map((c) => (
               <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 p-4 text-sm">
                 <span>
-                  {tKind(c.kind)}
+                  {tKind(chargeLabelKey(c))}
                   {c.groupName ? ` · ${c.groupName}` : ""}
                   <span className="block text-muted-foreground">
                     {c.paidAt ? t("paidOn", { date: day(toDateString(c.paidAt)) }) : t("due", { date: day(c.dueDate) })}
