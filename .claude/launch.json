@@ -4,7 +4,19 @@
     {
       "name": "moonlang",
       "runtimeExecutable": "bash",
-      "runtimeArgs": ["-c", "source scripts/env.sh && pnpm start --port 3000"],
+      "runtimeArgs": [
+        "-c",
+        "source scripts/env.sh && pnpm start --port 3000"
+      ],
+      "port": 3000
+    },
+    {
+      "name": "moonlang-dev",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-c",
+        "source scripts/env.sh && pnpm dev --port 3000"
+      ],
       "port": 3000
     }
   ]

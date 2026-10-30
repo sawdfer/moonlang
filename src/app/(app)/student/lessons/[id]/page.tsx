@@ -9,6 +9,11 @@ import { lessonEndsAt } from "@/server/classes/rules";
 import { listUpcomingLessonsForStudent } from "@/server/classes/student";
 import { JoinArea } from "../_components/join-area";
 
+export async function generateMetadata() {
+  const t = await getTranslations("studentLessons");
+  return { title: t("title") };
+}
+
 // Target of lesson reminders (F-008). Only lessons of the signed-in student are found,
 // so a guessed id never reveals another student's lesson or meeting link (RN-024).
 export default async function StudentLessonPage({
