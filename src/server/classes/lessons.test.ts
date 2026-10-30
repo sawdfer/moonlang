@@ -15,7 +15,7 @@ import {
   settleFinishedLessons,
 } from "./lessons";
 import { zonedDateTime } from "./rules";
-import { listUpcomingLessonsForStudent } from "./student";
+import { joinLesson, listUpcomingLessonsForStudent } from "./student";
 
 // Sunday 2026-11-01, 12:00 in São Paulo.
 const NOW = zonedDateTime("2026-11-01", "12:00");
@@ -96,11 +96,25 @@ describe("weekly lessons", () => {
     expect(lessons.slice(1).every((l) => l.startsAt.getUTCDay() === 4)).toBe(true);
   });
 
-  it("RN-004: the duration cannot change while students are enrolled", async () => {
+  it("V4, RN-004: a new duration moves every participation to the plan of that duration", async () => {
     const id = await groupWithAnaAndBruno();
+    await db.update(enrollment).set({ priceOverrideCents: 15000 }).where(eq(enrollment.studentId, "ana"));
+    const result = await updateClassGroup(db, { ...tuesdayGroup, id, durationMinutes: 120, now: NOW });
+    expect(result.planChanged).toBe(true);
+    const rows = await db.select().from(enrollment).where(eq(enrollment.classGroupId, id));
+    expect(rows.every((r) => r.planId === plan2h && r.priceOverrideCents === null)).toBe(true);
+    const lessons = await groupLessons(id);
+    expect(lessons.every((l) => l.durationMinutes === 120)).toBe(true);
+  });
+
+  it("V4: without a plan for the new duration, nothing changes", async () => {
+    const id = await groupWithAnaAndBruno();
+    await db.update(plan).set({ active: false }).where(eq(plan.id, plan2h));
     await expect(
       updateClassGroup(db, { ...tuesdayGroup, id, durationMinutes: 120, now: NOW }),
-    ).rejects.toThrow("durationLocked");
+    ).rejects.toThrow("noPlanForDuration");
+    const rows = await db.select().from(enrollment).where(eq(enrollment.classGroupId, id));
+    expect(rows.every((r) => r.planId === plan1h)).toBe(true);
   });
 });
 
@@ -212,9 +226,10 @@ describe("cancellations and credits", () => {
     const id = await groupWithAnaAndBruno();
     const result = await createScheduleBlock(db, {
       teacherId: "luana",
+      kind: "holiday",
       startsOn: "2026-11-10",
       endsOn: "2026-11-17",
-      reason: "Férias",
+      reason: "Feriadão",
       now: NOW,
     });
     expect(result.cancelled.map((c) => c.startsAt.toISOString())).toEqual([
@@ -231,6 +246,7 @@ describe("cancellations and credits", () => {
     const id = await groupWithAnaAndBruno();
     await createScheduleBlock(db, {
       teacherId: "luana",
+      kind: "holiday",
       startsOn: "2027-02-01",
       endsOn: "2027-02-07",
       reason: null,
@@ -269,18 +285,65 @@ describe("cancellations and credits", () => {
 });
 
 describe("attendance", () => {
-  it("F-004: a finished lesson becomes done and students are present by default", async () => {
+  async function marksOf(lessonId: string) {
+    const marks = await db.select().from(lessonAttendance).where(eq(lessonAttendance.lessonId, lessonId));
+    return Object.fromEntries(marks.map((m) => [m.studentId, m.status]));
+  }
+
+  it("V1, RN-008: tapping \"Entrar na aula\" records presence; who never taps is absent at the end", async () => {
     const id = await groupWithAnaAndBruno();
     const [first] = await groupLessons(id);
-    const during = zonedDateTime("2026-11-03", "19:30");
-    await setAttendance(db, { lessonId: first!.id, studentId: "bruno", status: "late_absent", actorId: "luana", now: during });
-    expect(await settleFinishedLessons(db, during)).toBe(0);
-    expect(await settleFinishedLessons(db, zonedDateTime("2026-11-03", "20:00"))).toBe(1);
-    const marks = await db.select().from(lessonAttendance).where(eq(lessonAttendance.lessonId, first!.id));
-    expect(Object.fromEntries(marks.map((m) => [m.studentId, m.status]))).toEqual({
-      ana: "present",
-      bruno: "late_absent",
+    const joined = await joinLesson(db, {
+      lessonId: first!.id,
+      viewer: { id: "ana", role: "student" },
+      now: zonedDateTime("2026-11-03", "18:50"),
     });
+    expect(joined).toEqual({ ok: true, meetingUrl: tuesdayGroup.meetingUrl });
+    expect(await settleFinishedLessons(db, zonedDateTime("2026-11-03", "19:30"))).toBe(0);
+    expect(await settleFinishedLessons(db, zonedDateTime("2026-11-03", "20:00"))).toBe(1);
+    const [done] = await groupLessons(id);
+    expect(done!.status).toBe("done");
+    expect(await marksOf(first!.id)).toEqual({ ana: "present", bruno: "absent" });
+  });
+
+  it("V1, RN-010: joining more than 20 minutes late is an absence", async () => {
+    const id = await groupWithAnaAndBruno();
+    const [first] = await groupLessons(id);
+    await joinLesson(db, { lessonId: first!.id, viewer: { id: "ana", role: "student" }, now: zonedDateTime("2026-11-03", "19:20") });
+    await joinLesson(db, { lessonId: first!.id, viewer: { id: "bruno", role: "student" }, now: zonedDateTime("2026-11-03", "19:21") });
+    expect(await marksOf(first!.id)).toEqual({ ana: "present", bruno: "late_absent" });
+  });
+
+  it("V1: the button only works from 15 minutes before the start until the end", async () => {
+    const id = await groupWithAnaAndBruno();
+    const [first] = await groupLessons(id);
+    const viewer = { id: "ana", role: "student" as const };
+    expect(await joinLesson(db, { lessonId: first!.id, viewer, now: zonedDateTime("2026-11-03", "18:44") })).toEqual({
+      ok: false,
+      reason: "closed",
+    });
+    expect((await joinLesson(db, { lessonId: first!.id, viewer, now: zonedDateTime("2026-11-03", "18:45") })).ok).toBe(true);
+    expect(await marksOf(first!.id)).toEqual({ ana: "present" });
+  });
+
+  it("V1: the first tap counts, and a mark made by the teacher is kept", async () => {
+    const id = await groupWithAnaAndBruno();
+    const [first] = await groupLessons(id);
+    await setAttendance(db, { lessonId: first!.id, studentId: "bruno", status: "present", actorId: "luana", now: zonedDateTime("2026-11-03", "19:05") });
+    await joinLesson(db, { lessonId: first!.id, viewer: { id: "ana", role: "student" }, now: zonedDateTime("2026-11-03", "19:00") });
+    await joinLesson(db, { lessonId: first!.id, viewer: { id: "ana", role: "student" }, now: zonedDateTime("2026-11-03", "19:40") });
+    await joinLesson(db, { lessonId: first!.id, viewer: { id: "bruno", role: "student" }, now: zonedDateTime("2026-11-03", "19:45") });
+    expect(await marksOf(first!.id)).toEqual({ ana: "present", bruno: "present" });
+  });
+
+  it("RN-015, RN-024: a blocked or outside student can't join", async () => {
+    const id = await groupWithAnaAndBruno();
+    await db.update(enrollment).set({ status: "blocked" }).where(eq(enrollment.studentId, "bruno"));
+    const [first] = await groupLessons(id);
+    const at = zonedDateTime("2026-11-03", "19:00");
+    expect(await joinLesson(db, { lessonId: first!.id, viewer: { id: "bruno", role: "student" }, now: at })).toEqual({ ok: false, reason: "notFound" });
+    expect(await joinLesson(db, { lessonId: first!.id, viewer: { id: "carla", role: "student" }, now: at })).toEqual({ ok: false, reason: "notFound" });
+    expect(await marksOf(first!.id)).toEqual({});
   });
 
   it("attendance can only be marked for participants of a lesson that started", async () => {
@@ -310,8 +373,9 @@ describe("student view", () => {
       .where(and(eq(enrollment.classGroupId, id), eq(enrollment.studentId, "bruno")));
     const ana = await listUpcomingLessonsForStudent(db, { id: "ana", role: "student" }, NOW);
     const bruno = await listUpcomingLessonsForStudent(db, { id: "bruno", role: "student" }, NOW);
-    expect(ana[0]!.meetingUrl).toBe(tuesdayGroup.meetingUrl);
-    expect(bruno[0]).toMatchObject({ blocked: true, meetingUrl: null });
+    expect(ana[0]).toMatchObject({ canJoin: true, hasMeetingLink: true });
+    expect(ana[0]).not.toHaveProperty("meetingUrl");
+    expect(bruno[0]).toMatchObject({ blocked: true, canJoin: false });
     expect(await listUpcomingLessonsForStudent(db, { id: "carla", role: "student" }, NOW)).toEqual([]);
   });
 
@@ -319,9 +383,12 @@ describe("student view", () => {
     const id = await groupWithAnaAndBruno();
     const [first] = await groupLessons(id);
     await db.update(lesson).set({ meetingUrl: "https://zoom.us/j/1" }).where(eq(lesson.id, first!.id));
-    const ana = await listUpcomingLessonsForStudent(db, { id: "ana", role: "student" }, NOW);
-    expect(ana[0]!.meetingUrl).toBe("https://zoom.us/j/1");
-    expect(ana[1]!.meetingUrl).toBe(tuesdayGroup.meetingUrl);
+    const lessons = await groupLessons(id);
+    const viewer = { id: "ana", role: "student" as const };
+    const first1 = await joinLesson(db, { lessonId: lessons[0]!.id, viewer, now: zonedDateTime("2026-11-03", "19:00") });
+    const second = await joinLesson(db, { lessonId: lessons[1]!.id, viewer, now: zonedDateTime("2026-11-10", "19:00") });
+    expect(first1).toEqual({ ok: true, meetingUrl: "https://zoom.us/j/1" });
+    expect(second).toEqual({ ok: true, meetingUrl: tuesdayGroup.meetingUrl });
   });
 
   it("RN-018: a trial user only sees their trial lesson", async () => {
@@ -337,7 +404,7 @@ describe("student view", () => {
     });
     const tina = await listUpcomingLessonsForStudent(db, { id: "tina", role: "trial" }, NOW);
     expect(tina).toHaveLength(1);
-    expect(tina[0]).toMatchObject({ kind: "trial", meetingUrl: "https://meet.google.com/trial" });
+    expect(tina[0]).toMatchObject({ kind: "trial", canJoin: true });
   });
 
   it("F-004: one-off lessons of the group show up for its students", async () => {

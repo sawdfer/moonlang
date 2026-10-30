@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { z } from "zod";
 import { db } from "@/db";
+import { cefrLevel, scheduleBlockKind, trialOutcome } from "@/db/schema";
 import { recordAudit } from "@/server/audit";
 import { requireStaff } from "@/server/auth/session";
 import {
@@ -32,6 +33,12 @@ import {
   setLessonMeetingUrl,
 } from "@/server/classes/lessons";
 import { attendanceForArrival, zonedDateTime } from "@/server/classes/rules";
+import {
+  checkTrialEligibility,
+  recordTrialOutcome,
+  scheduleTrialLesson,
+  TRIAL_DURATION_MINUTES,
+} from "@/server/classes/trial";
 import { getSetting } from "@/server/settings";
 
 const idField = z.string().min(1);
@@ -86,28 +93,47 @@ export async function createOneOffLessonAction(_state: FormState, formData: Form
   redirect(`/teacher/agenda/lessons/${lessonId}`);
 }
 
-async function notifyCancellations(cancelled: CancelledLesson[], reason: "teacher" | "block") {
+/**
+ * One notification per student with the cancelled lessons, the credits they got
+ * and, for a vacation, when their open credits expire (RN-011, V2).
+ */
+async function notifyCancellations(
+  cancelled: CancelledLesson[],
+  reason: "teacher" | "block",
+  vacation?: { startsAt: Date; expiringCredits: Map<string, number> },
+) {
   const t = await getTranslations("classes.notifications");
   const format = await getFormatter();
-  const byStudent = new Map<string, { dates: string[]; credits: number }>();
+  const day = (date: Date) => format.dateTime(date, { day: "2-digit", month: "2-digit" });
+  const byStudent = new Map<string, { dates: string[]; credits: number; until: Date | null }>();
+  const entryFor = (studentId: string) => {
+    const entry = byStudent.get(studentId) ?? { dates: [], credits: 0, until: null };
+    byStudent.set(studentId, entry);
+    return entry;
+  };
   for (const lesson of cancelled) {
     for (const studentId of lesson.studentIds) {
-      const entry = byStudent.get(studentId) ?? { dates: [], credits: 0 };
+      const entry = entryFor(studentId);
       entry.dates.push(format.dateTime(lesson.startsAt, LESSON_WHEN));
-      if (lesson.creditedStudentIds.includes(studentId)) entry.credits += 1;
-      byStudent.set(studentId, entry);
+      if (lesson.creditedStudentIds.includes(studentId) && lesson.creditExpiresAt) {
+        entry.credits += 1;
+        if (!entry.until || lesson.creditExpiresAt < entry.until) entry.until = lesson.creditExpiresAt;
+      }
     }
   }
+  for (const studentId of vacation?.expiringCredits.keys() ?? []) entryFor(studentId);
+
   for (const [studentId, entry] of byStudent) {
+    const expiring = vacation?.expiringCredits.get(studentId) ?? 0;
+    const lines = [
+      entry.dates.length > 0 ? t("cancelledBody", { dates: entry.dates.join(", ") }) : "",
+      entry.credits > 0 && entry.until ? t("creditsGranted", { count: entry.credits, date: day(entry.until) }) : "",
+      vacation && expiring > 0 ? t("vacationCreditsExpire", { count: expiring, date: day(vacation.startsAt) }) : "",
+    ].filter(Boolean);
     await notifyStudents([studentId], {
-      type: reason === "block" ? "lesson_cancelled_block" : "lesson_cancelled",
-      title: t("cancelledTitle", { count: entry.dates.length }),
-      body: [
-        t("cancelledBody", { dates: entry.dates.join(", ") }),
-        entry.credits > 0 ? t("creditsGranted", { count: entry.credits }) : "",
-      ]
-        .filter(Boolean)
-        .join(" "),
+      type: vacation ? "vacation_created" : reason === "block" ? "lesson_cancelled_block" : "lesson_cancelled",
+      title: vacation ? t("vacationTitle") : t("cancelledTitle", { count: entry.dates.length }),
+      body: lines.join(" "),
     });
   }
 }
@@ -172,6 +198,7 @@ export async function setLessonMeetingUrlAction(_state: FormState, formData: For
 }
 
 const blockSchema = z.object({
+  kind: z.enum(scheduleBlockKind.enumValues),
   startsOn: dateField,
   endsOn: dateField,
   reason: z
@@ -202,9 +229,126 @@ export async function createScheduleBlockAction(_state: FormState, formData: For
     action: "schedule_block.create",
     entityType: "schedule_block",
     entityId: result.blockId,
-    data: { ...parsed.data, cancelledLessons: result.cancelled.length },
+    data: {
+      ...parsed.data,
+      cancelledLessons: result.cancelled.length,
+      expiredCredits: [...result.expiringCredits.values()].reduce((a, b) => a + b, 0),
+    },
   });
-  await notifyCancellations(result.cancelled, "block");
+  await notifyCancellations(
+    result.cancelled,
+    "block",
+    parsed.data.kind === "vacation"
+      ? { startsAt: zonedDateTime(parsed.data.startsOn, "00:00"), expiringCredits: result.expiringCredits }
+      : undefined,
+  );
   revalidatePath("/teacher", "layout");
   redirect(`/teacher/agenda/blocks?cancelled=${result.cancelled.length}`);
+}
+
+const trialSchema = z.object({
+  userId: idField,
+  date: dateField,
+  time: timeField,
+  meetingUrl: meetingUrlField.refine((v) => v !== null, { message: "invalidMeetingUrl" }),
+  force: forceField,
+});
+
+/**
+ * Schedules a trial lesson (F-006). Warns when the person already had a trial
+ * in the last 3 months (RN-018) or the slot conflicts (RN-003); staff may confirm anyway.
+ */
+export async function scheduleTrialLessonAction(_state: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  const parsed = parseForm(trialSchema, formData);
+  if (parsed.error !== undefined) return { error: parsed.error };
+  const { userId, date, time, meetingUrl, force } = parsed.data;
+  const startsAt = zonedDateTime(date, time);
+  const teacherId = await agendaOwnerId(staff);
+
+  let eligibility: Awaited<ReturnType<typeof checkTrialEligibility>>;
+  try {
+    eligibility = await checkTrialEligibility(db, { userId, startsAt });
+  } catch (error) {
+    return errorState(error);
+  }
+  if (!force) {
+    const t = await getTranslations("agenda.trial");
+    const format = await getFormatter();
+    const warnings: string[] = [];
+    if (!eligibility.allowed && eligibility.nextAllowedOn) {
+      warnings.push(
+        t("tooSoon", {
+          date: format.dateTime(zonedDateTime(eligibility.nextAllowedOn, "12:00"), { dateStyle: "short" }),
+        }),
+      );
+    }
+    const issue = await checkLessonSlot(db, {
+      teacherId,
+      startsAt,
+      durationMinutes: TRIAL_DURATION_MINUTES,
+      maxLessonsPerDay: await getSetting("maxLessonsPerDay"),
+    });
+    if (issue) warnings.push(...(await formatIssues([issue])));
+    if (warnings.length > 0) return { issues: warnings };
+  }
+
+  let lessonId: string;
+  try {
+    lessonId = await scheduleTrialLesson(db, { userId, teacherId, startsAt, meetingUrl: meetingUrl!, now: new Date() });
+  } catch (error) {
+    return errorState(error);
+  }
+  await recordAudit({
+    actorId: staff.id,
+    action: eligibility.allowed ? "trial.schedule" : "trial.schedule_override",
+    entityType: "lesson",
+    entityId: lessonId,
+    data: { userId, nextAllowedOn: eligibility.nextAllowedOn },
+  });
+  const t = await getTranslations("classes.notifications");
+  const format = await getFormatter();
+  await notifyStudents([userId], {
+    type: "trial_scheduled",
+    title: t("trialScheduledTitle"),
+    body: t("trialScheduledBody", { when: format.dateTime(startsAt, LESSON_WHEN) }),
+  });
+  revalidatePath("/teacher", "layout");
+  redirect(`/teacher/agenda/lessons/${lessonId}`);
+}
+
+const trialOutcomeSchema = z.object({
+  lessonId: idField,
+  cefrLevel: z
+    .union([z.enum(cefrLevel.enumValues), z.literal("")])
+    .optional()
+    .transform((v) => v || null),
+  outcome: z.enum(trialOutcome.enumValues),
+  notes: z
+    .string()
+    .trim()
+    .max(1000)
+    .optional()
+    .transform((v) => v || null),
+});
+
+/** After the trial lesson: CEFR level, outcome and notes (F-006, RN-018). */
+export async function recordTrialOutcomeAction(_state: FormState, formData: FormData): Promise<FormState> {
+  const staff = await requireStaff();
+  const parsed = parseForm(trialOutcomeSchema, formData);
+  if (parsed.error !== undefined) return { error: parsed.error };
+  try {
+    const { userId } = await recordTrialOutcome(db, { ...parsed.data, now: new Date() });
+    await recordAudit({
+      actorId: staff.id,
+      action: "trial.outcome",
+      entityType: "lesson",
+      entityId: parsed.data.lessonId,
+      data: { userId, cefrLevel: parsed.data.cefrLevel, outcome: parsed.data.outcome },
+    });
+  } catch (error) {
+    return errorState(error);
+  }
+  revalidatePath("/teacher", "layout");
+  return { success: "saved" };
 }

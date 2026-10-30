@@ -44,24 +44,37 @@ export async function createClassGroup(
 const seatTaking = ne(enrollment.status, "dropped");
 
 /**
- * Edits a class group (F-003). A new weekday, time, duration or start date
- * replaces the future weekly lessons and keeps the past ones. The duration
- * cannot change while students are enrolled, because their plans follow it (RN-004).
+ * Edits a class group at any time (F-003, V4). A new weekday, time, duration
+ * or start date replaces the future weekly lessons and keeps the past ones.
+ * A new duration moves every participation to the plan of that duration;
+ * billing reads the enrollment's plan, so the new price applies from the next
+ * cycle (RN-004). A kept old price (RN-016) belonged to the old plan and is dropped.
  */
 export async function updateClassGroup(
   db: Database,
   input: ClassGroupInput & { id: string; now: Date },
-): Promise<{ scheduleChanged: boolean; studentIds: string[] }> {
+): Promise<{ scheduleChanged: boolean; studentIds: string[]; planChanged: boolean }> {
   return db.transaction(async (tx) => {
     const [group] = await tx.select().from(classGroup).where(eq(classGroup.id, input.id)).for("update");
     if (!group) throw new ClassesError("notFound");
     if (group.endsOn) throw new ClassesError("groupEnded");
     const enrolled = await tx
-      .select({ studentId: enrollment.studentId })
+      .select({ id: enrollment.id, studentId: enrollment.studentId })
       .from(enrollment)
       .where(and(eq(enrollment.classGroupId, group.id), seatTaking));
-    if (input.durationMinutes !== group.durationMinutes && enrolled.length > 0) {
-      throw new ClassesError("durationLocked");
+    const planChanged = input.durationMinutes !== group.durationMinutes && enrolled.length > 0;
+    if (planChanged) {
+      const [newPlan] = await listPlansForDuration(tx, input.durationMinutes);
+      if (!newPlan) throw new ClassesError("noPlanForDuration");
+      await tx
+        .update(enrollment)
+        .set({ planId: newPlan.id, priceOverrideCents: null })
+        .where(
+          inArray(
+            enrollment.id,
+            enrolled.map((e) => e.id),
+          ),
+        );
     }
 
     const scheduleChanged =
@@ -97,7 +110,7 @@ export async function updateClassGroup(
         );
       await materializeWeeklyLessons(tx, input.now, { groupIds: [group.id] });
     }
-    return { scheduleChanged, studentIds: enrolled.map((e) => e.studentId) };
+    return { scheduleChanged, studentIds: enrolled.map((e) => e.studentId), planChanged };
   });
 }
 
@@ -156,7 +169,8 @@ export async function enrollStudent(
     if (group.endsOn) throw new ClassesError("groupEnded");
 
     const [student] = await tx.select({ role: user.role }).from(user).where(eq(user.id, input.studentId));
-    if (student?.role !== "student") throw new ClassesError("notAStudent");
+    // A trial user can be placed in a class; they become a student when the first charge is paid (F-006, RN-025).
+    if (student?.role !== "student" && student?.role !== "trial") throw new ClassesError("notAStudent");
 
     const [chosen] = await tx.select().from(plan).where(eq(plan.id, input.planId));
     if (!chosen?.active || chosen.durationMinutes !== group.durationMinutes) {
@@ -247,12 +261,12 @@ export async function getClassGroupDetail(db: Database, id: string) {
   return { group, students };
 }
 
-/** Students who can be added to a class group (role "student"). */
+/** People who can be added to a class group: students and trial users converting (F-006). */
 export async function listStudents(db: Database) {
   return db
-    .select({ id: user.id, name: user.name, email: user.email })
+    .select({ id: user.id, name: user.name, email: user.email, role: user.role })
     .from(user)
-    .where(eq(user.role, "student"))
+    .where(inArray(user.role, ["student", "trial"]))
     .orderBy(asc(user.name));
 }
 

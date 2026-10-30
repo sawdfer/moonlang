@@ -11,7 +11,14 @@ import { LATE_TOLERANCE_MINUTES, lessonEndsAt } from "@/server/classes/rules";
 import { ActionForm } from "../../../classes/_components/action-form";
 import { Field, Select } from "../../../classes/_components/fields";
 import { TeacherNav } from "../../../classes/_components/teacher-nav";
-import { cancelLessonAction, setAttendanceAction, setLessonMeetingUrlAction } from "../../actions";
+import { cefrLevel, trialOutcome } from "@/db/schema";
+import { getTrialRecord } from "@/server/classes/trial";
+import {
+  cancelLessonAction,
+  recordTrialOutcomeAction,
+  setAttendanceAction,
+  setLessonMeetingUrlAction,
+} from "../../actions";
 
 export async function generateMetadata() {
   const t = await getTranslations("agenda");
@@ -35,6 +42,7 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
   const started = lesson.startsAt <= now;
   const canMark = started && (lesson.status === "confirmed" || lesson.status === "done");
   const meetingUrl = lesson.meetingUrl ?? groupMeetingUrl;
+  const trial = lesson.kind === "trial" ? await getTrialRecord(db, lesson.id) : null;
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-10">
@@ -103,6 +111,52 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
           ))}
         </ul>
       </Card>
+
+      {trial && (
+        <Card className="mt-6">
+          <h2 className="mb-1 font-display text-xl font-semibold">{t("trial.outcomeTitle")}</h2>
+          <p className="mb-4 text-sm text-muted-foreground">
+            {started ? t("trial.outcomeHint") : t("trial.outcomeLater")}
+          </p>
+          {started && (
+            <ActionForm action={recordTrialOutcomeAction} submitLabel={tc("save")} variant="outline">
+              <input type="hidden" name="lessonId" value={lesson.id} />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label={tc("fields.cefrLevel")} htmlFor="cefrLevel">
+                  <Select id="cefrLevel" name="cefrLevel" defaultValue={trial.cefrLevel ?? ""}>
+                    <option value="">{tc("fields.noLevel")}</option>
+                    {cefrLevel.enumValues.map((level) => (
+                      <option key={level} value={level}>
+                        {level}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field label={t("trial.outcome")} htmlFor="outcome">
+                  <Select id="outcome" name="outcome" defaultValue={trial.outcome}>
+                    {trialOutcome.enumValues.map((value) => (
+                      <option key={value} value={value}>
+                        {t(`trial.outcomes.${value}`)}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+              </div>
+              <Field label={t("trial.notes")} htmlFor="notes">
+                <textarea
+                  id="notes"
+                  name="notes"
+                  maxLength={1000}
+                  rows={3}
+                  defaultValue={trial.notes ?? ""}
+                  className="w-full rounded-lg border border-input bg-card px-3 py-2 text-base"
+                />
+              </Field>
+            </ActionForm>
+          )}
+          {trial.outcome === "converted" && <p className="mt-3 text-sm">{t("trial.convertHint")}</p>}
+        </Card>
+      )}
 
       <Card className="mt-6">
         <h2 className="mb-1 font-display text-xl font-semibold">{t("meetingLink")}</h2>

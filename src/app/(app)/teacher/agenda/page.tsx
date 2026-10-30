@@ -95,9 +95,14 @@ export default async function AgendaPage({
       <TeacherNav current="agenda" />
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-3xl font-semibold">{t("title")}</h1>
-        <Link href="/teacher/agenda/new" className={buttonVariants({ size: "sm" })}>
-          {t("newLesson")}
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/teacher/agenda/trial/new" className={buttonVariants({ size: "sm", variant: "outline" })}>
+            {t("trial.title")}
+          </Link>
+          <Link href="/teacher/agenda/new" className={buttonVariants({ size: "sm" })}>
+            {t("newLesson")}
+          </Link>
+        </div>
       </div>
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">

@@ -2,13 +2,15 @@ import "server-only";
 import { addDays } from "date-fns";
 import { and, asc, eq, inArray, lt, ne, or, sql } from "drizzle-orm";
 import type { Database } from "@/db/client";
-import { classGroup, enrollment, lesson, user } from "@/db/schema";
+import { classGroup, enrollment, lesson, lessonAttendance, user } from "@/db/schema";
 import { toDateString } from "@/lib/dates";
 import {
+  attendanceOnJoin,
   canJoinLesson,
   type EnrollmentStatus,
   type LessonKind,
   type LessonStatus,
+  isJoinWindowOpen,
   MATERIALIZE_HORIZON_DAYS,
 } from "./rules";
 
@@ -23,9 +25,15 @@ export type StudentLesson = {
   groupName: string | null;
   /** The participation is blocked for non-payment (RN-015). */
   blocked: boolean;
-  /** Only set when the viewer may join this lesson now (RN-015, RN-024). */
-  meetingUrl: string | null;
+  /** The viewer may join this lesson (RN-015, RN-018, RN-024). */
+  canJoin: boolean;
+  /** "Entrar na aula" works now: 15 minutes before the start until the end (V1). */
+  joinOpen: boolean;
+  /** A meeting link is set for this lesson or its class group. */
+  hasMeetingLink: boolean;
 };
+
+type LessonWithLink = StudentLesson & { meetingUrl: string | null };
 
 /**
  * Upcoming lessons of the signed-in student, filtered on the server by their
@@ -36,6 +44,15 @@ export async function listUpcomingLessonsForStudent(
   viewer: StudentViewer,
   now: Date,
 ): Promise<StudentLesson[]> {
+  // The meeting link never leaves the server here: the page links to the join endpoint (RN-024, V1).
+  return (await loadStudentLessons(db, viewer, now)).map((l) => {
+    const { meetingUrl, ...rest } = l;
+    void meetingUrl;
+    return rest;
+  });
+}
+
+async function loadStudentLessons(db: Database, viewer: StudentViewer, now: Date): Promise<LessonWithLink[]> {
   const enrollments =
     viewer.role === "student"
       ? await db
@@ -82,7 +99,7 @@ export async function listUpcomingLessonsForStudent(
     )
     .orderBy(asc(lesson.startsAt));
 
-  const result: StudentLesson[] = [];
+  const result: LessonWithLink[] = [];
   for (const row of rows) {
     const enrolled = row.classGroupId ? byGroup.get(row.classGroupId) : undefined;
     const own = row.studentId === viewer.id;
@@ -93,6 +110,7 @@ export async function listUpcomingLessonsForStudent(
 
     const enrollmentStatus: EnrollmentStatus | null = enrolled?.status ?? null;
     const canJoin = canJoinLesson({ lesson: row, viewer, enrollmentStatus, now });
+    const meetingUrl = row.lessonMeetingUrl ?? row.groupMeetingUrl;
     result.push({
       id: row.id,
       kind: row.kind,
@@ -101,10 +119,42 @@ export async function listUpcomingLessonsForStudent(
       durationMinutes: row.durationMinutes,
       groupName: row.groupName,
       blocked: enrollmentStatus === "blocked",
-      meetingUrl: canJoin ? (row.lessonMeetingUrl ?? row.groupMeetingUrl) : null,
+      canJoin,
+      joinOpen: canJoin && isJoinWindowOpen(row, now),
+      hasMeetingLink: meetingUrl !== null,
+      meetingUrl: canJoin ? meetingUrl : null,
     });
   }
   return result;
+}
+
+export type JoinResult = { ok: true; meetingUrl: string } | { ok: false; reason: "notFound" | "closed" | "noLink" };
+
+/**
+ * The student taps "Entrar na aula" (V1): records their attendance — present,
+ * or an absence when more than 20 minutes late (RN-008, RN-010) — and returns
+ * the meeting link. The first tap counts; a mark the teacher already made is kept.
+ */
+export async function joinLesson(
+  db: Database,
+  input: { lessonId: string; viewer: StudentViewer; now: Date },
+): Promise<JoinResult> {
+  const lessons = await loadStudentLessons(db, input.viewer, input.now);
+  const target = lessons.find((l) => l.id === input.lessonId);
+  if (!target?.canJoin) return { ok: false, reason: "notFound" };
+  if (!target.joinOpen) return { ok: false, reason: "closed" };
+  if (!target.meetingUrl) return { ok: false, reason: "noLink" };
+
+  const status = attendanceOnJoin(target, input.now);
+  await db
+    .insert(lessonAttendance)
+    .values({ lessonId: target.id, studentId: input.viewer.id, status, markedById: input.viewer.id })
+    .onConflictDoUpdate({
+      target: [lessonAttendance.lessonId, lessonAttendance.studentId],
+      set: { status, markedById: input.viewer.id },
+      setWhere: eq(lessonAttendance.status, "expected"),
+    });
+  return { ok: true, meetingUrl: target.meetingUrl };
 }
 
 /** The student's class groups with their classmates' names and weekly slot (F-003). */

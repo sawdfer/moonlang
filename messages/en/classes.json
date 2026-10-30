@@ -36,7 +36,6 @@
       "cefrLevel": "Level",
       "noLevel": "No level set",
       "duration": "Duration",
-      "durationLocked": "To change the duration, remove the students first: their plan follows the class duration.",
       "weekday": "Weekday",
       "startTime": "Time",
       "startsOn": "Start date",
@@ -44,7 +43,8 @@
       "meetingUrlHint": "Google Meet or Zoom. Students only see it inside the platform.",
       "student": "Student",
       "plan": "Plan",
-      "startedOn": "Starts on"
+      "startedOn": "Starts on",
+      "durationChangesPlan": "Changing the duration moves the students to the plan of the new duration, with the new price from the next cycle."
     },
     "nav": {
       "home": "Home",
@@ -72,11 +72,12 @@
       "notOpen": "This lesson was cancelled.",
       "notStarted": "Attendance can be marked once the lesson starts.",
       "notParticipant": "This student is not in this lesson.",
-      "durationLocked": "To change the duration, remove the students first.",
       "notAStudent": "Only student accounts can be added.",
       "planMismatch": "The plan must have the same duration as the class.",
       "groupFull": "This class already has 3 students.",
-      "alreadyEnrolled": "This student is already in the class."
+      "alreadyEnrolled": "This student is already in the class.",
+      "noPlanForDuration": "There is no active plan with this duration.",
+      "notATrial": "This person doesn't have a trial account."
     },
     "success": {
       "saved": "Saved! ✨",
@@ -98,8 +99,14 @@
       "lessonScheduledBody": "Lesson of {name} on {when}.",
       "cancelledTitle": "{count, plural, one {Lesson cancelled} other {Lessons cancelled}}",
       "cancelledBody": "Luana cancelled: {dates}.",
-      "creditsGranted": "You got {count, plural, one {1 lesson credit} other {# lesson credits}}, valid for 30 days."
-    }
+      "creditsGranted": "You got {count, plural, one {1 lesson credit} other {# lesson credits}}, valid until {date}.",
+      "planChangedBody": "Your lesson now lasts {hours}h and your plan changes with it, with the new price from the next cycle.",
+      "vacationTitle": "Luana's vacation 🏖️",
+      "vacationCreditsExpire": "Heads up: {count, plural, one {your open credit expires} other {your # open credits expire}} on {date}, when the vacation starts. Use them before!",
+      "trialScheduledTitle": "Your trial lesson is booked! 🎉",
+      "trialScheduledBody": "See you on {when}. Just open the platform and tap \"Join lesson\"."
+    },
+    "trialCandidate": "{name} (trial)"
   },
   "agenda": {
     "title": "Agenda",
@@ -136,7 +143,7 @@
     },
     "backToAgenda": "Back to agenda",
     "attendance": "Attendance",
-    "attendanceHint": "More than {minutes} minutes late counts as an absence. Unmarked students are recorded as present when the lesson ends.",
+    "attendanceHint": "Attendance is recorded when the student taps \"Join lesson\". More than {minutes} minutes late counts as an absence, and students who never join are marked absent when the lesson ends. You can correct it here.",
     "attendanceLater": "Attendance can be marked once the lesson starts.",
     "noParticipants": "No students in this lesson.",
     "attendanceStatus": {
@@ -165,7 +172,7 @@
     "cancelConfirm": "Cancel this lesson? Students will be notified.",
     "blocks": {
       "title": "Blocked days",
-      "hint": "Vacation, holidays and days off. Weekly lessons on these days are cancelled and each student gets 1 lesson credit, valid for 30 days.",
+      "hint": "Vacation, holidays and days off. Weekly lessons on these days are cancelled and each student gets 1 lesson credit.",
       "created": "Days blocked. {count, plural, =0 {No lessons were affected.} one {1 lesson was cancelled and students were notified.} other {# lessons were cancelled and students were notified.}}",
       "create": "Block days",
       "confirm": "Block these days? Weekly lessons on them will be cancelled, with credits for students. This cannot be undone.",
@@ -175,7 +182,37 @@
       "reasonPlaceholder": "Vacation, holiday…",
       "list": "Blocks",
       "empty": "No blocked days.",
-      "past": "Past"
+      "past": "Past",
+      "kind": "Type",
+      "kinds": {
+        "holiday": "Holiday or day off",
+        "vacation": "Vacation"
+      },
+      "kindHints": {
+        "holiday": "Students' credits stay valid as usual.",
+        "vacation": "Every open credit expires on the first day of the vacation, and students are notified."
+      }
+    },
+    "trial": {
+      "title": "Book trial",
+      "hint": "Free 1h trial lesson, which also works as a placement test.",
+      "noPeople": "Nobody has a trial account yet.",
+      "invite": "Send a trial invite",
+      "create": "Book trial lesson",
+      "person": "Person",
+      "duration": "The trial lasts 1h.",
+      "tooSoon": "This person already had a trial in the last 3 months: the next one would be from {date}.",
+      "outcomeTitle": "Trial result",
+      "outcomeHint": "Record the level and whether the person will continue. The level goes to their profile.",
+      "outcomeLater": "The result can be recorded once the lesson starts.",
+      "outcome": "Result",
+      "outcomes": {
+        "pending": "Still deciding",
+        "converted": "Will become a student",
+        "not_converted": "Won't continue"
+      },
+      "notes": "Notes",
+      "convertHint": "To close the deal, add the person to a class. They become a student when the first charge is paid."
     }
   },
   "studentLessons": {
@@ -198,6 +235,24 @@
     "individual": "Individual lessons",
     "blocked": "Lesson access is paused due to a pending payment. Talk to Luana to sort it out.",
     "linkSoon": "The lesson link isn't set yet. It shows up here as soon as Luana adds it.",
-    "join": "Join lesson"
+    "join": "Join lesson",
+    "joinOpensSoon": "The \"Join lesson\" button shows up 15 minutes before the start.",
+    "joinError": {
+      "closed": "Joining opens 15 minutes before the lesson and closes when it ends.",
+      "noLink": "The lesson link isn't set yet.",
+      "notFound": "This lesson isn't available to you."
+    },
+    "locked": {
+      "title": "There's more in here 👀",
+      "subtitle": "These areas open when you sign up for a plan.",
+      "cta": "This is only for those already aboard the rocket 🚀🌙. Talk to Luana!",
+      "areas": {
+        "materials": "Materials",
+        "recordings": "Lesson recordings",
+        "progress": "Your progress",
+        "tasks": "Tasks",
+        "posts": "Class posts"
+      }
+    }
   }
 }

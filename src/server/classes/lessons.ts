@@ -4,7 +4,12 @@ import { and, asc, eq, gt, gte, inArray, isNull, lt, ne, or, sql } from "drizzle
 import type { Database } from "@/db/client";
 import { classGroup, enrollment, lesson, lessonAttendance, scheduleBlock, user } from "@/db/schema";
 import { toDateString } from "@/lib/dates";
-import { grantLessonCredits, type LessonCreditOrigin } from "@/server/credits/lesson-credits";
+import {
+  expireCreditsForVacation,
+  expireDueCredits,
+  grantLessonCredits,
+  type LessonCreditOrigin,
+} from "@/server/credits/lesson-credits";
 import {
   addDaysToDate,
   checkSchedule,
@@ -177,9 +182,9 @@ export async function lessonParticipants(
 }
 
 /**
- * Confirmed lessons that already ended become "done" (F-004). Students without
- * an attendance mark are recorded as present: the lesson counts as given unless
- * the teacher records an absence, which she can still do afterwards.
+ * Confirmed lessons that already ended become "done" (F-004). Attendance is
+ * recorded when a student taps "Entrar na aula" (V1), so students who never
+ * did are recorded as absent; the teacher can still correct it (RN-008, RN-012).
  */
 export async function settleFinishedLessons(db: Database, now: Date): Promise<number> {
   const finished = await db
@@ -200,7 +205,7 @@ export async function settleFinishedLessons(db: Database, now: Date): Promise<nu
     });
   if (finished.length === 0) return 0;
 
-  // Participants are computed as for an open lesson, so blocked students are not marked present.
+  // Participants are computed as for an open lesson, so blocked students get no mark.
   const participants = await lessonParticipants(
     db,
     finished.map((l) => ({ ...l, status: "confirmed" as const })),
@@ -208,7 +213,7 @@ export async function settleFinishedLessons(db: Database, now: Date): Promise<nu
   const rows = finished.flatMap((l) =>
     (participants.get(l.id) ?? [])
       .filter((p) => p.attendance === null)
-      .map((p) => ({ lessonId: l.id, studentId: p.studentId, status: "present" as const })),
+      .map((p) => ({ lessonId: l.id, studentId: p.studentId, status: "absent" as const })),
   );
   if (rows.length) await db.insert(lessonAttendance).values(rows).onConflictDoNothing();
   return finished.length;
@@ -218,6 +223,22 @@ export async function settleFinishedLessons(db: Database, now: Date): Promise<nu
 export async function syncSchedule(db: Database, now: Date): Promise<void> {
   await materializeWeeklyLessons(db, now);
   await settleFinishedLessons(db, now);
+  await expireDueCredits(db, now);
+}
+
+/** Start instants of the teacher's current and future vacations (V2). */
+export async function vacationStarts(db: Database, teacherId: string, now: Date): Promise<Date[]> {
+  const rows = await db
+    .select({ startsOn: scheduleBlock.startsOn })
+    .from(scheduleBlock)
+    .where(
+      and(
+        eq(scheduleBlock.teacherId, teacherId),
+        eq(scheduleBlock.kind, "vacation"),
+        gte(scheduleBlock.endsOn, toDateString(now)),
+      ),
+    );
+  return rows.map((r) => startOfDay(r.startsOn));
 }
 
 export type CancelledLesson = {
@@ -228,6 +249,8 @@ export type CancelledLesson = {
   studentIds: string[];
   /** Students who received a lesson credit (RN-011). */
   creditedStudentIds: string[];
+  /** When those credits expire: 30 days, or earlier when a vacation starts (V2). */
+  creditExpiresAt: Date | null;
 };
 
 async function cancelOne(
@@ -240,7 +263,7 @@ async function cancelOne(
     .update(lesson)
     .set({ status: "cancelled_by_teacher", cancelledAt: input.now, cancelledById: input.actorId })
     .where(eq(lesson.id, row.id));
-  const creditedStudentIds = CREDITED_KINDS.includes(row.kind)
+  const granted = CREDITED_KINDS.includes(row.kind)
     ? await grantLessonCredits(db, {
         lessonId: row.id,
         lessonStartsAt: row.startsAt,
@@ -248,14 +271,16 @@ async function cancelOne(
         origin: input.origin,
         grantedById: input.actorId,
         now: input.now,
+        vacationStarts: await vacationStarts(db, row.teacherId, input.now),
       })
-    : [];
+    : { studentIds: [], expiresAt: null };
   return {
     lessonId: row.id,
     startsAt: row.startsAt,
     classGroupId: row.classGroupId,
     studentIds: participants.map((p) => p.studentId),
-    creditedStudentIds,
+    creditedStudentIds: granted.studentIds,
+    creditExpiresAt: granted.expiresAt,
   };
 }
 
@@ -272,15 +297,30 @@ export async function cancelLessonByTeacher(
   });
 }
 
+export type ScheduleBlockKind = (typeof scheduleBlock.$inferSelect)["kind"];
+
 /**
  * Blocks days on the teacher's agenda (vacation, holidays). Weekly lessons on
  * those days are cancelled by the teacher and each student gets a lesson
  * credit (F-004, RN-011). Lessons set by hand on those days are kept.
+ * A vacation also makes every open credit expire when it starts (V2).
  */
 export async function createScheduleBlock(
   db: Database,
-  input: { teacherId: string; startsOn: string; endsOn: string; reason: string | null; now: Date },
-): Promise<{ blockId: string; cancelled: CancelledLesson[] }> {
+  input: {
+    teacherId: string;
+    kind: ScheduleBlockKind;
+    startsOn: string;
+    endsOn: string;
+    reason: string | null;
+    now: Date;
+  },
+): Promise<{
+  blockId: string;
+  cancelled: CancelledLesson[];
+  /** Per student, credits that now expire when the vacation starts. */
+  expiringCredits: Map<string, number>;
+}> {
   if (input.endsOn < input.startsOn) throw new ClassesError("invalidRange");
   if (input.startsOn < toDateString(input.now)) throw new ClassesError("pastDate");
 
@@ -292,6 +332,7 @@ export async function createScheduleBlock(
       .insert(scheduleBlock)
       .values({
         teacherId: input.teacherId,
+        kind: input.kind,
         startsOn: input.startsOn,
         endsOn: input.endsOn,
         reason: input.reason,
@@ -319,7 +360,15 @@ export async function createScheduleBlock(
         await cancelOne(tx, row, { actorId: input.teacherId, now: input.now, origin: "schedule_block" }),
       );
     }
-    return { blockId: block!.id, cancelled };
+    const expiringCredits =
+      input.kind === "vacation"
+        ? await expireCreditsForVacation(tx, {
+            teacherId: input.teacherId,
+            vacationStartsAt: startOfDay(input.startsOn),
+            now: input.now,
+          })
+        : new Map<string, number>();
+    return { blockId: block!.id, cancelled, expiringCredits };
   });
 }
 

@@ -1,12 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
   addDaysToDate,
+  addMonthsToDate,
   attendanceForArrival,
+  attendanceOnJoin,
   canJoinLesson,
+  canWatchRecording,
   checkSchedule,
   isAllowedMeetingUrl,
   isBlocked,
+  isJoinWindowOpen,
   lessonEndsAt,
+  nextTrialAllowedOn,
   shouldAutoComplete,
   weekdayOfDate,
   weeklyOccurrences,
@@ -287,5 +292,51 @@ describe("canJoinLesson", () => {
     expect(
       canJoinLesson({ lesson: individual, viewer: { id: "s2", role: "student" }, enrollmentStatus: null, now }),
     ).toBe(false);
+  });
+});
+
+describe("join window and attendance on join", () => {
+  const slot = { startsAt: zonedDateTime("2026-11-10", "19:00"), durationMinutes: 60 };
+
+  it("V1, RN-008: opens 15 minutes before the start and closes at the end", () => {
+    expect(isJoinWindowOpen(slot, zonedDateTime("2026-11-10", "18:44"))).toBe(false);
+    expect(isJoinWindowOpen(slot, zonedDateTime("2026-11-10", "18:45"))).toBe(true);
+    expect(isJoinWindowOpen(slot, zonedDateTime("2026-11-10", "19:59"))).toBe(true);
+    expect(isJoinWindowOpen(slot, zonedDateTime("2026-11-10", "20:00"))).toBe(false);
+  });
+
+  it("V1, RN-010: joining early or up to 20 minutes late is present; later is an absence", () => {
+    expect(attendanceOnJoin(slot, zonedDateTime("2026-11-10", "18:50"))).toBe("present");
+    expect(attendanceOnJoin(slot, zonedDateTime("2026-11-10", "19:20"))).toBe("present");
+    expect(attendanceOnJoin(slot, zonedDateTime("2026-11-10", "19:21"))).toBe("late_absent");
+  });
+});
+
+describe("canWatchRecording", () => {
+  it("RN-028, V4: only students who joined the lesson, or were released, see the recording", () => {
+    expect(canWatchRecording({ attendance: "present", released: false })).toBe(true);
+    expect(canWatchRecording({ attendance: "absent", released: false })).toBe(false);
+    expect(canWatchRecording({ attendance: "late_absent", released: false })).toBe(false);
+    expect(canWatchRecording({ attendance: null, released: false })).toBe(false);
+    expect(canWatchRecording({ attendance: null, released: true })).toBe(true);
+  });
+});
+
+describe("trial interval", () => {
+  it("RN-018: a trial on 10/01 allows the next one from 10/04", () => {
+    expect(nextTrialAllowedOn(["2027-01-10"])).toBe("2027-04-10");
+  });
+
+  it("RN-018: counts from the latest trial", () => {
+    expect(nextTrialAllowedOn(["2026-06-01", "2026-10-15"])).toBe("2027-01-15");
+  });
+
+  it("RN-018: no previous trial, no restriction", () => {
+    expect(nextTrialAllowedOn([])).toBeNull();
+  });
+
+  it("adds months clamping to shorter months", () => {
+    expect(addMonthsToDate("2026-11-30", 3)).toBe("2027-02-28");
+    expect(addMonthsToDate("2026-01-31", 1)).toBe("2026-02-28");
   });
 });

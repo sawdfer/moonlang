@@ -157,9 +157,13 @@ export const lessonAttendance = pgTable(
   ],
 );
 
+export const scheduleBlockKind = pgEnum("schedule_block_kind", ["vacation", "holiday"]);
+
 /** Days the teacher is unavailable; weekly lessons on these days are cancelled (F-004). */
 export const scheduleBlock = pgTable("schedule_block", {
   id: id(),
+  /** A vacation makes every open credit expire when it starts (V2); a holiday does not. */
+  kind: scheduleBlockKind("kind").notNull().default("holiday"),
   teacherId: text("teacher_id")
     .notNull()
     .references(() => user.id),
