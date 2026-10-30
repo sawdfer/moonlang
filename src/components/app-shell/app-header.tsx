@@ -9,17 +9,19 @@ import { getCurrentUser } from "@/server/auth/session";
 type NavItem = { href: string; key: string };
 
 function navFor(role: Role): NavItem[] {
-  if (role === "trial") return [{ href: "/student/lessons", key: "lessons" }];
   if (!isStaff(role)) {
+    // Trial users also see finance: they pay the first charge there (RN-025).
     return [
       { href: "/student/lessons", key: "lessons" },
       { href: "/student/finance", key: "finance" },
+      { href: "/student/profile", key: "profile" },
     ];
   }
   const items: NavItem[] = [
     { href: "/teacher", key: "dashboard" },
     { href: "/teacher/agenda", key: "agenda" },
     { href: "/teacher/classes", key: "classes" },
+    { href: "/teacher/students", key: "students" },
     { href: "/teacher/finance", key: "finance" },
     { href: "/teacher/whatsapp", key: "whatsapp" },
     { href: "/teacher/announcements", key: "announcements" },

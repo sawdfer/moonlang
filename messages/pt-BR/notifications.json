@@ -70,7 +70,7 @@
         "whatsapp": "Oi, {name}! 📣 {message}"
       },
       "chargeDueSoon": {
-        "title": "Sua mensalidade vence em 3 dias 💸",
+        "title": "Sua mensalidade vence em {date} 💸",
         "body": "Valor: {amount}. Vencimento: {date}. Easy peasy!"
       },
       "chargeOverdue": {

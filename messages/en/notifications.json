@@ -70,7 +70,7 @@
         "whatsapp": "Hi, {name}! 📣 {message}"
       },
       "chargeDueSoon": {
-        "title": "Your monthly fee is due in 3 days 💸",
+        "title": "Your monthly fee is due on {date} 💸",
         "body": "Amount: {amount}. Due date: {date}. Easy peasy!"
       },
       "chargeOverdue": {

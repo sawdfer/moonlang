@@ -37,6 +37,8 @@
     "staff": "Team",
     "settings": "Settings",
     "lessons": "My lessons",
-    "account": "My account"
+    "account": "My account",
+    "students": "Students",
+    "profile": "My profile"
   }
 }

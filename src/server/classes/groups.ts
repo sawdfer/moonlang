@@ -1,7 +1,7 @@
 import "server-only";
 import { and, asc, eq, gt, inArray, ne, sql } from "drizzle-orm";
 import type { Database } from "@/db/client";
-import { classGroup, enrollment, lesson, plan, user } from "@/db/schema";
+import { classGroup, enrollment, lesson, plan, studentProfile, user } from "@/db/schema";
 import { toDateString } from "@/lib/dates";
 import { removeEnrollmentCredits } from "@/server/credits/lesson-credits";
 import { ClassesError, materializeWeeklyLessons } from "./lessons";
@@ -266,6 +266,8 @@ export async function listStudents(db: Database) {
   return db
     .select({ id: user.id, name: user.name, email: user.email, role: user.role })
     .from(user)
+    // Removed accounts lose their profile (RN-021) and must not be offered again.
+    .innerJoin(studentProfile, eq(studentProfile.userId, user.id))
     .where(inArray(user.role, ["student", "trial"]))
     .orderBy(asc(user.name));
 }

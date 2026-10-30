@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getFormatter, getTranslations } from "next-intl/server";
+import { StudentLessonsEmptyState } from "@/components/fun";
 import { Card } from "@/components/ui/card";
 import { db } from "@/db";
 import { requireUser } from "@/server/auth/session";
@@ -48,9 +49,7 @@ export default async function StudentHomePage() {
       <section className="mt-8">
         <h2 className="mb-3 font-display text-xl font-semibold">{t("nextLesson")}</h2>
         {!next ? (
-          <Card>
-            <p className="text-muted-foreground">{t("none")}</p>
-          </Card>
+          <StudentLessonsEmptyState />
         ) : (
           <Card className="border-primary">
             <p className="text-sm font-semibold uppercase tracking-wide text-primary">
