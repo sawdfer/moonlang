@@ -5,4 +5,4 @@
  * Bump this whenever that text changes: every student and trial user is then
  * asked to accept the new version on their next access.
  */
-export const TERMS_VERSION = "2026-10-28";
+export const TERMS_VERSION = "2026-11-04";
