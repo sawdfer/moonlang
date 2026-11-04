@@ -1,0 +1,4 @@
+# False positives (gitleaks fingerprints: commit:file:rule:line).
+# Throwaway CI placeholders from commit 0101f53, since replaced by values generated on the runner.
+0101f530d66d8d10e959c9dbf199816a67f352a1:.github/workflows/ci.yml:generic-api-key:47
+0101f530d66d8d10e959c9dbf199816a67f352a1:.github/workflows/ci.yml:generic-api-key:49

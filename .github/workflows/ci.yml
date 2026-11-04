@@ -14,15 +14,15 @@ concurrency:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       # Build-time placeholders only; real secrets live in Coolify.
       BETTER_AUTH_SECRET: ci-placeholder-secret-with-at-least-32-chars
       BETTER_AUTH_URL: http://localhost:3000
       NEXT_TELEMETRY_DISABLED: 1
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 24
       - run: corepack enable pnpm
@@ -36,34 +36,36 @@ jobs:
 
   # The same images Coolify builds (ADR-004), so a broken Dockerfile fails here first.
   docker:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: docker build --target runner -t moonlang:ci .
       - run: docker build --target tools -t moonlang-tools:ci .
-      - run: docker compose config --quiet
-        env:
-          POSTGRES_PASSWORD: ci
-          BETTER_AUTH_SECRET: ci-placeholder-secret-with-at-least-32-chars
-          BETTER_AUTH_URL: http://localhost:3000
-          CRON_SECRET: ci-placeholder-cron-secret-with-32-chars
-          CLOUDFLARE_TUNNEL_TOKEN: ci
+      # Throwaway values generated on the runner: no secret-like literal lives in the repository.
+      - name: Validate docker-compose.yml
+        run: |
+          export POSTGRES_PASSWORD="$(openssl rand -hex 16)"
+          export BETTER_AUTH_SECRET="$(openssl rand -hex 32)"
+          export CRON_SECRET="$(openssl rand -hex 32)"
+          export BETTER_AUTH_URL=http://localhost:3000
+          export CLOUDFLARE_TUNNEL_TOKEN=ci
+          docker compose config --quiet
 
   secrets:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@v2
+      - uses: gitleaks/gitleaks-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   dependency-review:
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/dependency-review-action@v4
         with:
           fail-on-severity: high

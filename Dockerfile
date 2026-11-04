@@ -17,6 +17,8 @@ RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
 
 FROM deps AS builder
 COPY . .
+# Git does not keep empty folders: make sure public/ exists for the runner stage.
+RUN mkdir -p public
 # Build-time placeholders: env.ts validates these when pages are collected.
 # Real values are only given to the running containers.
 RUN BETTER_AUTH_SECRET=build-only-placeholder-secret-not-used-at-runtime \
